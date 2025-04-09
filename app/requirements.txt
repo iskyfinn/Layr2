@@ -1,0 +1,68 @@
+# Flask and Core Web Framework
+flask
+flask-sqlalchemy
+flask-login
+flask-migrate
+flask-wtf
+flask-cors
+werkzeug
+
+# Database Drivers
+pymysql  # MySQL
+psycopg2-binary
+# sqlite3 is included in Python standard library
+
+# Authentication and Security
+python-dotenv
+email-validator
+passlib
+bcrypt
+
+# Document Processing
+python-docx
+PyMuPDF
+pandas
+openpyxl
+tabula-py
+
+# Scientific and Data Analysis
+numpy
+scipy
+scikit-learn
+matplotlib
+seaborn
+
+# Machine Learning and AI
+tensorflow
+transformers
+torch
+
+# Natural Language Processing
+nltk
+spacy
+
+# Web Scraping and API Interactions
+requests
+beautifulsoup4
+
+# Markdown and Text Processing
+markdown
+mistune
+
+# Deployment and Server
+gunicorn
+eventlet
+gevent
+
+# Logging and Monitoring
+sentry-sdk
+
+# Testing
+pytest
+pytest-flask
+coverage
+
+# Utility Libraries
+python-dateutil
+pytz
+pillow

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}HLDD Analysis - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('applications.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('applications.application_detail', app_id=application.id) }}">{{ application.name }}</a></li>
+                    <li class="breadcrumb-item active">HLDD Analysis</li>
+                </ol>
+            </nav>
+            <h2>HLDD Analysis for {{ application.name }}</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Analysis Results</h5>
+                    <span class="badge bg-primary">Overall Score: {{ results.overall_score }}%</span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        {{ results.message }}
+                    </div>
+
+                    <h5 class="mt-4">Insights:</h5>
+                    <div class="list-group">
+                        {% for insight in results.insights %}
+                            {% set bg_class = "bg-light" %}
+                            {% set icon_class = "fa-info-circle" %}
+                            
+                            {% if insight.type == "warning" %}
+                                {% set bg_class = "bg-warning bg-opacity-25" %}
+                                {% set icon_class = "fa-exclamation-triangle" %}
+                            {% elif insight.type == "positive" %}
+                                {% set bg_class = "bg-success bg-opacity-25" %}
+                                {% set icon_class = "fa-check-circle" %}
+                            {% endif %}
+                            
+                            <div class="list-group-item {{ bg_class }}">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="fas {{ icon_class }} fa-lg mt-1"></i>
+                                    </div>
+                                    <div>
+                                        {{ insight.message }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Application
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

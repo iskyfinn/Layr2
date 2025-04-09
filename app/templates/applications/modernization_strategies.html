@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Modernization Strategies - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('applications.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('applications.application_detail', app_id=application.id) }}">{{ application.name }}</a></li>
+                    <li class="breadcrumb-item active">Modernization Strategies</li>
+                </ol>
+            </nav>
+            <h2>Modernization Strategies for {{ application.name }}</h2>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Analysis Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p>Based on the analysis of your application's architecture and requirements, the following modernization strategies are recommended.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="mb-3">Recommended Strategies</h3>
+            
+            {% if strategies.recommended_strategies %}
+                {% for strategy in strategies.recommended_strategies %}
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ strategy.name }}</h5>
+                            <span class="badge bg-primary">Score: {{ strategy.score }}%</span>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ strategy.description }}</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-check-circle text-success me-2"></i>Benefits</h6>
+                                    <ul>
+                                        {% for benefit in strategy.benefits %}
+                                            <li>{{ benefit }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-exclamation-circle text-warning me-2"></i>Considerations</h6>
+                                    <ul>
+                                        {% for consideration in strategy.considerations %}
+                                            <li>{{ consideration }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    No specific modernization strategies could be determined. Consider uploading an HLDD or providing more information about your application.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Application
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Upload HLDD - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-upload me-2"></i>Upload HLDD
+            <small class="text-muted">for {{ application.name }}</small>
+        </h2>
+        <p class="text-muted">Upload a High Level Design Document (HLDD) for architectural analysis</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Application
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-upload me-2"></i>Upload HLDD</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('applications.upload_hldd', app_id=application.id) }}">
+                    <div class="mb-4">
+                        <label for="hldd_file" class="form-label">HLDD Document</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="hldd_file" name="hldd_file" required accept=".docx,.pdf,.txt,.md">
+                            <button class="btn btn-outline-secondary" type="button" id="file-info-btn">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Allowed file types: .docx, .pdf, .txt, .md</div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <h5><i class="fas fa-info-circle me-2"></i>What is an HLDD?</h5>
+                        <p>
+                            A High Level Design Document (HLDD) describes the architecture of your application, including:
+                        </p>
+                        <ul>
+                            <li>System components and their interactions</li>
+                            <li>Data flows and storage mechanisms</li>
+                            <li>Security considerations</li>
+                            <li>Deployment architecture</li>
+                            <li>Technology stack</li>
+                        </ul>
+                        <p>
+                            Layr will analyze your HLDD to evaluate architectural soundness and provide recommendations.
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-lightbulb me-1"></i> <strong>Tip:</strong> 
+                            If you don't have an HLDD yet, you can 
+                            <a href="{{ url_for('applications.generate_hldd', app_id=application.id) }}">generate one</a> 
+                            with Layr.
+                        </p>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i> Upload HLDD
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Tips Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Tips for Good HLDDs</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Include clear component diagrams
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Document security considerations
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Describe data flows and storage
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Include scalability and reliability plans
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Document integration points
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Specify technology choices
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Alternative Options -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Alternative Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('applications.generate_hldd', app_id=application.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-alt me-1"></i> Generate HLDD
+                    </a>
+                    <a href="{{ url_for('applications.recommend_architecture', app_id=application.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-lightbulb me-1"></i> Get Recommendations First
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Info Modal -->
+<div class="modal fade" id="fileInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Supported File Types</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-file-word text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">.docx</h5>
+                                <p class="mb-0">Microsoft Word document format. Preferred for formatted documents with images and diagrams.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-file-pdf text-danger fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">.pdf</h5>
+                                <p class="mb-0">Adobe PDF format. Good for finalized documents with fixed formatting.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-file-alt text-secondary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">.txt</h5>
+                                <p class="mb-0">Plain text format. Simple but lacks formatting capabilities.</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fab fa-markdown text-info fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">.md</h5>
+                                <p class="mb-0">Markdown format. Good for simple formatted documents with headings and lists.</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+    // File Info Modal Trigger
+    document.getElementById('file-info-btn').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('fileInfoModal'));
+        modal.show();
+    });
+</script>
+{% endblock %}

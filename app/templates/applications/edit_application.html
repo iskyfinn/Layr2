@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Edit Application - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('applications.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('applications.application_detail', app_id=application.id) }}">{{ application.name }}</a></li>
+                    <li class="breadcrumb-item active">Edit Application</li>
+                </ol>
+            </nav>
+            <h2>Edit Application</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Application Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Application Name*</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ application.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description*</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required>{{ application.description }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="business_unit" class="form-label">Business Unit*</label>
+                            <input type="text" class="form-control" id="business_unit" name="business_unit" value="{{ application.business_unit }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="technology_stack" class="form-label">Technology Stack</label>
+                            <input type="text" class="form-control" id="technology_stack" name="technology_stack" value="{{ application.technology_stack }}">
+                            <div class="form-text">Comma-separated list of technologies (e.g., Java, Spring, React, PostgreSQL)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="criticality" class="form-label">Business Criticality*</label>
+                            <select class="form-select" id="criticality" name="criticality" required>
+                                <option value="High" {% if application.criticality == 'High' %}selected{% endif %}>High</option>
+                                <option value="Medium" {% if application.criticality == 'Medium' %}selected{% endif %}>Medium</option>
+                                <option value="Low" {% if application.criticality == 'Low' %}selected{% endif %}>Low</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="security_classification" class="form-label">Security Classification*</label>
+                            <select class="form-select" id="security_classification" name="security_classification" required>
+                                <option value="Confidential" {% if application.security_classification == 'Confidential' %}selected{% endif %}>Confidential</option>
+                                <option value="Internal" {% if application.security_classification == 'Internal' %}selected{% endif %}>Internal</option>
+                                <option value="Public" {% if application.security_classification == 'Public' %}selected{% endif %}>Public</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="deployment_model" class="form-label">Deployment Model*</label>
+                            <select class="form-select" id="deployment_model" name="deployment_model" required>
+                                <option value="Cloud" {% if application.deployment_model == 'Cloud' %}selected{% endif %}>Cloud</option>
+                                <option value="On-Premise" {% if application.deployment_model == 'On-Premise' %}selected{% endif %}>On-Premise</option>
+                                <option value="Hybrid" {% if application.deployment_model == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="user_base" class="form-label">User Base</label>
+                            <input type="text" class="form-control" id="user_base" name="user_base" value="{{ application.user_base }}">
+                            <div class="form-text">Estimated number of users or description of user groups</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="additional_context" class="form-label">Additional Context</label>
+                            <textarea class="form-control" id="additional_context" name="additional_context" rows="3">{{ application.additional_context }}</textarea>
+                            <div class="form-text">Any other information relevant to architecture review</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Provide a clear, descriptive name for your application</li>
+                        <li>Include all major technologies in the technology stack</li>
+                        <li>Be specific about business criticality requirements</li>
+                        <li>Make sure security classification is accurate</li>
+                        <li>Additional context helps ARB reviewers understand your application better</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
