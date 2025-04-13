@@ -1,5 +1,10 @@
 from datetime import datetime
-from app import db
+from app.extensions import db, login_manager
+
+
+def get_db():
+
+    return db
 
 class ARBReview(db.Model):
     __tablename__ = 'arb_reviews'

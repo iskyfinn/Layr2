@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}HLDD Analysis - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-search me-2"></i>HLDD Analysis
+            <small class="text-muted">for {{ application.name }}</small>
+        </h2>
+        <p class="text-muted">Analysis results for your High Level Design Document</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Application
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Analysis Results -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Analysis Results</h5>
+                <span class="badge {% if results.overall_score >= 80 %}bg-success{% elif results.overall_score >= 60 %}bg-warning{% else %}bg-danger{% endif %} fs-6">
+                    <i class="fas {% if results.overall_score >= 80 %}fa-check-circle{% elif results.overall_score >= 60 %}fa-exclamation-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                    Score: {{ results.overall_score }}%
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="alert {% if results.overall_score >= 80 %}alert-success{% elif results.overall_score >= 60 %}alert-warning{% else %}alert-danger{% endif %}">
+                    <i class="fas {% if results.overall_score >= 80 %}fa-check-circle{% elif results.overall_score >= 60 %}fa-exclamation-circle{% else %}fa-times-circle{% endif %} me-2"></i>
+                    {{ results.message }}
+                </div>
+
+                <h5 class="mt-4">Insights:</h5>
+                <div class="list-group">
+                    {% for insight in results.insights %}
+                        {% set bg_class = "bg-light" %}
+                        {% set icon_class = "fa-info-circle" %}
+                        
+                        {% if insight.type == "warning" %}
+                            {% set bg_class = "bg-warning bg-opacity-25" %}
+                            {% set icon_class = "fa-exclamation-triangle" %}
+                        {% elif insight.type == "positive" %}
+                            {% set bg_class = "bg-success bg-opacity-25" %}
+                            {% set icon_class = "fa-check-circle" %}
+                        {% endif %}
+                        
+                        <div class="list-group-item {{ bg_class }}">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas {{ icon_class }} fa-lg mt-1"></i>
+                                </div>
+                                <div>
+                                    {{ insight.message }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('applications.recommend_architecture', app_id=application.id) }}" class="btn btn-primary">
+                        <i class="fas fa-lightbulb me-1"></i> Get Architecture Recommendations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Score Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Score Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="display-4 fw-bold {% if results.overall_score >= 80 %}text-success{% elif results.overall_score >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ results.overall_score }}%
+                    </div>
+                    <div class="text-muted">Overall Score</div>
+                </div>
+                
+                <!-- Score gauge visualization -->
+                <div class="position-relative mb-4" style="height: 10px; background-color: #e9ecef; border-radius: 5px;">
+                    <div class="position-absolute top-0 start-0 bottom-0 bg-success" style="width: {{ results.overall_score }}%; border-radius: 5px;"></div>
+                </div>
+                
+                <div class="row text-center mb-2">
+                    <div class="col-4">
+                        <div class="small text-muted">Poor</div>
+                        <div class="small text-muted">0-59%</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Adequate</div>
+                        <div class="small text-muted">60-79%</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="small text-muted">Excellent</div>
+                        <div class="small text-muted">80-100%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-forward me-2"></i>Next Steps</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('applications.recommend_architecture', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-lightbulb me-2"></i>Get Recommendations</h6>
+                        </div>
+                        <small>Get tailored architecture recommendations</small>
+                    </a>
+                    <a href="{{ url_for('applications.patterns_analysis', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-puzzle-piece me-2"></i>Analyze Patterns</h6>
+                        </div>
+                        <small>Identify architecture patterns and anti-patterns</small>
+                    </a>
+                    <a href="{{ url_for('applications.generate_diagram', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-project-diagram me-2"></i>Generate Diagrams</h6>
+                        </div>
+                        <small>Create architecture diagrams</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" id="ask-question-btn">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-question-circle me-2"></i>Ask Architecture Question</h6>
+                        </div>
+                        <small>Get answers to architecture questions</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ask Question Modal -->
+<div class="modal fade" id="askQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Ask Architecture Question</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label

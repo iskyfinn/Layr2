@@ -3,7 +3,8 @@
  * Main CSS Styles
  */
 
- :root {
+/* Variables */
+:root {
     --primary-color: #3498db;
     --secondary-color: #2c3e50;
     --accent-color: #e74c3c;
@@ -11,16 +12,7 @@
     --dark-color: #2c3e50;
 }
 
-.navbar .nav-link {
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: color 0.3s;
-}
-
-.navbar .nav-link:hover {
-    color: var(--primary-color) !important;
-}
-
+/* Base Styles */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
@@ -33,20 +25,52 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.navbar-brand {
+.navbar-dark .navbar-brand {
+    color: white !important;
     font-weight: bold;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: white !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: color 0.3s;
+    opacity: 0.9;
+    padding: 0.5rem 1rem;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: white !important;
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.navbar-dark .dropdown-toggle {
     color: white !important;
 }
 
-.nav-link {
-    color: rgba(255, 255, 255, 0.85) !important;
+.navbar-dark .navbar-nav .nav-item {
+    margin: 0 2px;
+    border-radius: 4px;
 }
 
-.nav-link:hover {
-    color: white !important;
+.navbar-dark .navbar-nav .nav-item:hover {
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Button Styles */
+.btn {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    padding: 0.375rem 0.75rem !important;
+}
+
+.btn:hover {
+    opacity: 0.9 !important;
+}
+
 .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
@@ -55,6 +79,32 @@ body {
 .btn-primary:hover {
     background-color: #2980b9;
     border-color: #2980b9;
+}
+
+.btn-outline-light, .btn-outline-primary, .btn-outline-danger {
+    border-width: 1px !important;
+}
+
+/* Navbar specific buttons */
+.navbar .btn-outline-light {
+    color: white !important;
+    border-color: white !important;
+    border-width: 2px !important;
+    background-color: transparent !important;
+}
+
+.navbar .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.navbar .btn-light {
+    color: #007bff !important;
+    background-color: white !important;
+    border-color: white !important;
+}
+
+.navbar .btn-light:hover {
+    background-color: #f8f9fa !important;
 }
 
 /* Card Styles */
@@ -71,43 +121,6 @@ body {
     font-weight: bold;
 }
 
-/* Footer Styles */
-.footer {
-    background-color: var(--secondary-color);
-    color: white;
-    padding: 20px 0;
-    margin-top: 50px;
-}
-
-/* Sidebar Styles */
-.sidebar {
-    background-color: var(--light-color);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-/* Additional Button Visibility Fixes */
-.btn {
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Fix for Bootstrap button outlines */
-.btn-outline-light, .btn-outline-primary, .btn-outline-danger {
-    border-width: 1px !important;
-}
-
-/* Fix for button padding */
-.btn {
-    padding: 0.375rem 0.75rem !important;
-}
-
-/* Fix button hover states */
-.btn:hover {
-    opacity: 0.9 !important;
-}
-
 /* Status Badge Styles */
 .status-badge {
     padding: 5px 10px;
@@ -116,22 +129,30 @@ body {
     font-weight: bold;
 }
 
-.status-pti {
+.status-badge:empty {
+    display: none;
+}
+
+.status-badge:not(:empty) {
+    display: inline-block;
+}
+
+.status-badge.PTI, .status-pti {
     background-color: #f1c40f;
     color: #333;
 }
 
-.status-review {
+.status-badge.In-Review, .status-review {
     background-color: #3498db;
     color: white;
 }
 
-.status-pto {
+.status-badge.PTO, .status-pto {
     background-color: #2ecc71;
     color: white;
 }
 
-.status-rejected {
+.status-badge.Rejected, .status-rejected {
     background-color: #e74c3c;
     color: white;
 }
@@ -150,7 +171,7 @@ body {
     border-radius: 0 0 8px 8px;
 }
 
-/* Custom Form Controls */
+/* Form Controls */
 .form-control:focus, .btn:focus {
     box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
     border-color: var(--primary-color);
@@ -168,9 +189,25 @@ body {
     border-radius: 10px;
 }
 
-/* Table Hover Effect */
+/* Table Styles */
 .table-hover tbody tr:hover {
     background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Footer Styles */
+.footer {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 20px 0;
+    margin-top: 50px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    background-color: var(--light-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive Adjustments */

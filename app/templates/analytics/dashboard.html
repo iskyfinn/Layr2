@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-chart-bar me-2"></i>Analytics Dashboard
+        </h2>
+        <p class="text-muted">Architecture analysis and review insights</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Application Status Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Application Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="applicationStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Architecture Scores Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Architecture Scores</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="architectureScoresChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Review Trends Chart -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Review Trends (Last 6 Months)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="reviewTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Common Issues Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Common Issues</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="commonIssuesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Meeting Statistics -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Meeting Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h2 id="avgAppsPerMeeting">-</h2>
+                                <p class="text-muted mb-0">Average Applications Per Meeting</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="meetingStatsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch and display application status data
+        fetch('{{ url_for("analytics.api_application_status") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const ctx = document.getElementById('applicationStatusChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.counts,
+                                backgroundColor: [
+                                    '#f1c40f', // PTI
+                                    '#3498db', // In Review
+                                    '#2ecc71', // PTO
+                                    '#e74c3c'  // Rejected
+                                ],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        
+        // Fetch and display architecture scores data
+        fetch('{{ url_for("analytics.api_architecture_scores") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const ctx = document.getElementById('architectureScoresChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: data.score_ranges.labels,
+                            datasets: [{
+                                data: data.score_ranges.counts,
+                                backgroundColor: [
+                                    '#e74c3c', // Low
+                                    '#f1c40f', // Medium
+                                    '#2ecc71'  // High
+                                ],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        
+        // Fetch and display review trends data
+        fetch('{{ url_for("analytics.api_review_trends") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const ctx = document.getElementById('reviewTrendsChart').getContext('2d');
+                    
+                    const months = data.monthly_data.map(item => item.month);
+                    const submitted = data.monthly_data.map(item => item.submitted);
+                    const approved = data.monthly_data.map(item => item.approved);
+                    const rejected = data.monthly_data.map(item => item.rejected);
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: months,
+                            datasets: [
+                                {
+                                    label: 'Submitted',
+                                    data: submitted,
+                                    borderColor: '#3498db',
+                                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                    borderWidth: 2,
+                                    fill: false,
+                                    tension: 0.4
+                                },
+                                {
+                                    label: 'Approved',
+                                    data: approved,
+                                    borderColor: '#2ecc71',
+                                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                    borderWidth: 2,
+                                    fill: false,
+                                    tension: 0.4
+                                },
+                                {
+                                    label: 'Rejected',
+                                    data: rejected,
+                                    borderColor: '#e74c3c',
+                                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                    borderWidth: 2,
+                                    fill: false,
+                                    tension: 0.4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        
+        // Fetch and display common issues data
+        fetch('{{ url_for("analytics.api_common_issues") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const ctx = document.getElementById('commonIssuesChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)),
+                            datasets: [{
+                                label: 'Occurrence Count',
+                                data: data.counts,
+                                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        
+        // Fetch and display meeting statistics data
+        fetch('{{ url_for("analytics.api_meeting_stats") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update average apps per meeting
+                    document.getElementById('avgAppsPerMeeting').textContent = data.avg_apps_per_meeting;
+                    
+                    // Create meeting counts chart
+                    const ctx = document.getElementById('meetingStatsChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.meeting_counts.months,
+                            datasets: [{
+                                label: 'Meetings',
+                                data: data.meeting_counts.counts,
+                                backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                                borderColor: 'rgba(46, 204, 113, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+    });
+</script>
+{% endblock %}

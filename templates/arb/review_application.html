@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Review {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-clipboard-check me-2"></i>Review Application
+            <small class="text-muted">{{ application.name }}</small>
+        </h2>
+        <p class="text-muted">Architecture Review Board Assessment</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-eye me-1"></i> View Application
+        </a>
+        <a href="{{ url_for('arb.applications_list') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Application Overview -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Application Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> {{ application.name }}</p>
+                        <p><strong>Owner:</strong> {{ application.owner.username }}</p>
+                        <p><strong>Status:</strong> <span class="status-badge">{{ application.status }}</span></p>
+                        <p><strong>Submitted:</strong> {{ application.updated_at.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        {% if application.architecture_score is not none %}
+                            <p><strong>Architecture Score:</strong> {{ "%.0f"|format(application.architecture_score * 100) }}%</p>
+                        {% endif %}
+                        <p>
+                            <strong>HLDD:</strong> 
+                            {% if application.hldd_path %}
+                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Uploaded</span>
+                            {% else %}
+                                <span class="text-danger"><i class="fas fa-times-circle me-1"></i>Not Uploaded</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Description</h6>
+                    <p>{{ application.description or 'No description provided.' }}</p>
+                    
+                    <h6 class="mt-3">Use Case</h6>
+                    <p>{{ application.use_case or 'No use case specified.' }}</p>
+                    
+                    <h6 class="mt-3">Baseline Systems</h6>
+                    <p>{{ application.baseline_systems or 'No baseline systems specified.' }}</p>
+                    
+                    <h6 class="mt-3">Requirements</h6>
+                    <p>{{ application.requirements or 'No requirements specified.' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Review Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Submit Review</h5>
+            </div>
+            <div class="card-body">
+                {% if existing_review %}
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i> You have already reviewed this application. You can update your review below.
+                    </div>
+                {% endif %}
+                
+                <form method="POST" action="{{ url_for('arb.review_application', app_id=application.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label">Vote</label>
+                        <div class="btn-group w-100 mb-2" role="group" aria-label="Vote options">
+                            <input type="radio" class="btn-check" name="vote" id="vote-approve" value="Approve" 
+                                   {% if existing_review and existing_review.vote == 'Approve' %}checked{% endif %} required>
+                            <label class="btn btn-outline-success" for="vote-approve">
+                                <i class="fas fa-check-circle me-1"></i> Approve
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="vote" id="vote-reject" value="Reject"
+                                   {% if existing_review and existing_review.vote == 'Reject' %}checked{% endif %} required>
+                            <label class="btn btn-outline-danger" for="vote-reject">
+                                <i class="fas fa-times-circle me-1"></i> Reject
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="vote" id="vote-abstain" value="Abstain"
+                                   {% if existing_review and existing_review.vote == 'Abstain' %}checked{% endif %} required>
+                            <label class="btn btn-outline-secondary" for="vote-abstain">
+                                <i class="fas fa-minus-circle me-1"></i> Abstain
+                            </label>
+                        </div>
+                        <div class="form-text">Select your vote for this application</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="comments" class="form-label">Comments</label>
+                        <textarea class="form-control" id="comments" name="comments" rows="6" placeholder="Provide feedback on the application architecture...">{{ existing_review.comments if existing_review else '' }}</textarea>
+                        <div class="form-text">Include specific feedback about strengths and areas for improvement</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i> Submit Review
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Architecture Insights -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Architecture Insights</h5>
+            </div>
+            <div class="card-body">
+                <div id="arb-insights">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Review Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-poll me-2"></i>Review Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Reviews:</span>
+                    <span class="badge bg-primary rounded-pill">{{ application.reviews.count() }}</span>
+                </div>
+                
+                <div class="progress mb-3" style="height: 25px;">
+                    {% set approve_count = application.reviews|selectattr('vote', 'equalto', 'Approve')|list|length %}
+                    {% set reject_count = application.reviews|selectattr('vote', 'equalto', 'Reject')|list|length %}
+                    {% set abstain_count = application.reviews|selectattr('vote', 'equalto', 'Abstain')|list|length %}
+                    {% set total_count = approve_count + reject_count + abstain_count %}
+                    
+                    {% if total_count > 0 %}
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ (approve_count / total_count * 100)|round|int }}%;" 
+                             aria-valuenow="{{ approve_count }}" aria-valuemin="0" aria-valuemax="{{ total_count }}">
+                            {{ approve_count }}
+                        </div>
+                        <div class="progress-bar bg-danger" role="progressbar" 
+                             style="width: {{ (reject_count / total_count * 100)|round|int }}%;" 
+                             aria-valuenow="{{ reject_count }}" aria-valuemin="0" aria-valuemax="{{ total_count }}">
+                            {{ reject_count }}
+                        </div>
+                        <div class="progress-bar bg-secondary" role="progressbar" 
+                             style="width: {{ (abstain_count / total_count * 100)|round|int }}%;" 
+                             aria-valuenow="{{ abstain_count }}" aria-valuemin="0" aria-valuemax="{{ total_count }}">
+                            {{ abstain_count }}
+                        </div>
+                    {% else %}
+                        <div class="progress-bar bg-light text-dark" role="progressbar" style="width: 100%;">
+                            No votes yet
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between text-center small">
+                    <div>
+                        <div class="badge bg-success mb-1">{{ approve_count }}</div>
+                        <div>Approve</div>
+                    </div>
+                    <div>
+                        <div class="badge bg-danger mb-1">{{ reject_count }}</div>
+                        <div>Reject</div>
+                    </div>
+                    <div>
+                        <div class="badge bg-secondary mb-1">{{ abstain_count }}</div>
+                        <div>Abstain</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Make Final Decision -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-gavel me-2"></i>Make Final Decision</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('arb.application_decision', app_id=application.id) }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Final Decision</label>
+                        <div class="btn-group w-100 mb-2" role="group" aria-label="Decision options">
+                            <input type="radio" class="btn-check" name="decision" id="decision-approve" value="PTO" required>
+                            <label class="btn btn-outline-success" for="decision-approve">
+                                <i class="fas fa-check-circle me-1"></i> Approve PTO
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="decision" id="decision-reject" value="Rejected" required>
+                            <label class="btn btn-outline-danger" for="decision-reject">
+                                <i class="fas fa-times-circle me-1"></i> Reject
+                            </label>
+                        </div>
+                        <div class="form-text">This will finalize the application status</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="decision_notes" class="form-label">Decision Notes</label>
+                        <textarea class="form-control" id="decision_notes" name="decision_notes" rows="3" 
+                                  placeholder="Provide reasons for the final decision..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-gavel me-1"></i> Finalize Decision
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden input for JS -->
+<input type="hidden" id="application-id" value="{{ application.id }}">
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/review_application.js') }}"></script>
+{% endblock %}

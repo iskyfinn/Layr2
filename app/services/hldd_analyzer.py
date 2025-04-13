@@ -1,10 +1,26 @@
+# app/services/hldd_analyzer.py
+# -*- coding: utf-8 -*-
+
 import os
 import re
 import docx
 import fitz  # PyMuPDF
 import pandas as pd
 import numpy as np
+import json
+import logging
 from app.config import Config
+from textblob import TextBlob  # For basic NLP tasks
+from collections import Counter
+from sklearn.feature_extraction.text import TfidfVectorizer
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask_login import login_required, current_user
+from app.extensions import db
+
+from app.models.application import Application
+from app.models.arb_review import ARBReview
+from werkzeug.utils import secure_filename
+
 
 class HLDDAnalyzer:
     """
@@ -12,62 +28,169 @@ class HLDDAnalyzer:
     architectural soundness
     """
     
-    def __init__(self):
+    def __init__(self, hldd_path):
+        """
+        Initializes the class with the path to the High-Level Design Document (HLDD) and sets up
+        data structures for architecture analysis.
+
+        Args:
+            hldd_path (str): The file path to the HLDD document.
+        """
+
+        self.hldd_path = hldd_path
+        self.hldd_content = None  # Will store the loaded HLDD content
+        self.architecture_patterns = {
+            'microservices': {'weight': 0.10},
+            'layered': {'weight': 0.15},
+            'event-driven': {'weight': 0.12},
+            'serverless': {'weight': 0.08},
+            'service-oriented': {'weight': 0.10},
+            'monolithic': {'weight': 0.05},
+            'client-server': {'weight': 0.05},
+            'peer-to-peer': {'weight': 0.03},
+            'space-based': {'weight': 0.02},
+            'api gateway': {'weight': 0.08},
+            'circuit breaker': {'weight': 0.07},
+            'cqrs': {'weight': 0.05}
+        }
+        self.anti_patterns = {
+            'big ball of mud': {'weight': 0.15},
+            'spaghetti code': {'weight': 0.12},
+            'monolith': {'weight': 0.10},
+            'tight coupling': {'weight': 0.20},
+            'god class': {'weight': 0.08},
+            'silver bullet': {'weight': 0.05},
+            'golden hammer': {'weight': 0.07},
+            'distributed monolith': {'weight': 0.13},
+            'analysis paralysis': {'weight': 0.03},
+            'vendor lock-in': {'weight': 0.05},
+            'reinventing the wheel': {'weight': 0.02}
+        }
+        self.quality_attributes = {
+            'scalability': {'weight': 0.20},
+            'performance': {'weight': 0.20},
+            'reliability': {'weight': 0.15},
+            'availability': {'weight': 0.15},
+            'maintainability': {'weight': 0.10},
+            'security': {'weight': 0.10},
+            'usability': {'weight': 0.05},
+            'accessibility': {'weight': 0.05}
+        }
+        
         self.criteria = {
             'security': {
                 'weight': 0.25,
                 'keywords': [
-                    'encryption', 'authentication', 'authorization', 
-                    'identity', 'compliance', 'audit', 'security', 
-                    'firewall', 'waf', 'ssl', 'tls', 'certificate'
+                    'encryption', 'authentication', 'authorization',
+                    'identity management', 'access control lists (ACLs)', 'role-based access control (RBAC)',
+                    'least privilege', 'multi-factor authentication (MFA)', 'single sign-on (SSO)',
+                    'data at rest encryption', 'data in transit encryption', 'end-to-end encryption',
+                    'transport layer security (TLS)', 'secure sockets layer (SSL)', 'certificates',
+                    'firewall', 'web application firewall (WAF)', 'intrusion detection system (IDS)',
+                    'intrusion prevention system (IPS)', 'vulnerability scanning', 'penetration testing',
+                    'threat modeling', 'security audit', 'compliance frameworks', 'data breach prevention',
+                    'incident response', 'security policies', 'security best practices', 'zero trust',
+                    'data masking', 'tokenization', 'hashing', 'salting', 'key management'
                 ]
             },
             'scalability': {
                 'weight': 0.20,
                 'keywords': [
-                    'scaling', 'autoscale', 'load balancer', 'distributed', 
-                    'partition', 'throughput', 'performance', 'capacity',
-                    'kubernetes', 'containers', 'microservices'
+                    'scaling up', 'scaling out', 'horizontal scaling', 'vertical scaling', 'auto-scaling groups',
+                    'load balancing', 'distributed systems', 'distributed databases', 'sharding', 'partitioning',
+                    'replication', 'caching strategies', 'content delivery network (CDN)', 'message queues',
+                    'event-driven architecture', 'microservices architecture', 'containerization (Docker, Podman)',
+                    'orchestration (Kubernetes, ECS, Swarm)', 'elasticity', 'throughput optimization',
+                    'performance tuning', 'capacity planning', 'high-performance computing (HPC)',
+                    'reactive programming', 'non-blocking I/O', 'concurrency control', 'stateless services'
                 ]
             },
             'reliability': {
                 'weight': 0.20,
                 'keywords': [
-                    'redundancy', 'failover', 'backup', 'recovery', 
-                    'high availability', 'fault tolerance', 'resilience',
-                    'sla', 'uptime', 'disaster recovery'
+                    'high availability (HA)', 'fault tolerance', 'redundancy (active-active, active-passive)',
+                    'failover mechanisms', 'automatic recovery', 'disaster recovery (DR)', 'business continuity (BC)',
+                    'backup and restore', 'data replication', 'data integrity checks', 'checksums',
+                    'circuit breakers', 'retry mechanisms', 'idempotency', 'monitoring and alerting',
+                    'health checks', 'service level agreements (SLAs)', 'uptime guarantees', 'mean time between failures (MTBF)',
+                    'mean time to recovery (MTTR)', 'graceful degradation', 'self-healing', 'observability (metrics, logs, traces)'
                 ]
             },
             'maintainability': {
                 'weight': 0.15,
                 'keywords': [
-                    'documentation', 'monitoring', 'logging', 'observability',
-                    'ci/cd', 'pipeline', 'testing', 'version control',
-                    'deployment', 'configuration management'
+                    'documentation (design, API, user)', 'code readability', 'code modularity', 'low coupling', 'high cohesion',
+                    'naming conventions', 'code comments', 'architectural patterns', 'design principles (SOLID, DRY, KISS)',
+                    'refactoring', 'technical debt management', 'version control (Git, SVN)', 'branching strategies',
+                    'continuous integration/continuous delivery (CI/CD) pipelines', 'automated testing (unit, integration, E2E)',
+                    'infrastructure as code (IaC) (Terraform, CloudFormation)', 'configuration management (Ansible, Chef, Puppet)',
+                    'monitoring dashboards', 'logging standards', 'centralized logging', 'distributed tracing',
+                    'observability platforms', 'dependency management', 'code reviews', 'static code analysis', 'linting'
                 ]
             },
             'cost_optimization': {
                 'weight': 0.10,
                 'keywords': [
-                    'cost', 'budget', 'optimization', 'reserved', 
-                    'spot instances', 'autoscaling', 'serverless',
-                    'pay-as-you-go', 'rightsizing', 'lifecycle'
+                    'cost-effectiveness', 'budget constraints', 'resource optimization', 'waste reduction',
+                    'reserved instances', 'savings plans', 'spot instances', 'elastic compute', 'serverless computing (Lambda, Functions)',
+                    'pay-as-you-go pricing', 'rightsizing resources', 'storage tiering', 'data lifecycle management',
+                    'network optimization', 'caching to reduce costs', 'cost monitoring tools', 'cloud financial management (FinOps)',
+                    'resource tagging', 'cost allocation', 'automation of resource management', 'economies of scale'
                 ]
             },
             'compliance': {
                 'weight': 0.10,
                 'keywords': [
-                    'gdpr', 'hipaa', 'pci', 'sox', 'fedramp', 'compliance',
-                    'regulation', 'policy', 'audit', 'governance', 'data protection'
+                    'General Data Protection Regulation (GDPR)', 'Health Insurance Portability and Accountability Act (HIPAA)',
+                    'Payment Card Industry Data Security Standard (PCI DSS)', 'Sarbanes-Oxley Act (SOX)',
+                    'Federal Risk and Authorization Management Program (FedRAMP)', 'regulatory compliance',
+                    'legal requirements', 'industry standards', 'internal policies', 'governance frameworks',
+                    'data protection laws', 'privacy regulations', 'data sovereignty', 'audit trails for compliance',
+                    'access logging for compliance', 'security controls for compliance', 'risk and compliance management',
+                    'data residency', 'data localization', 'compliance certifications'
                 ]
             }
         }
-        
+
         # Required architecture components
-        self.required_components = [
-            'database', 'application server', 'networking', 'security', 
-            'authentication', 'monitoring', 'backup', 'disaster recovery'
-        ]
+        self.required_components = {
+            'database': {'weight': 0.20},
+            'application server': {'weight': 0.20},
+            'networking': {'weight': 0.15},
+            'security': {'weight': 0.15},
+            'authentication': {'weight': 0.10},
+            'monitoring': {'weight': 0.10},
+            'backup': {'weight': 0.05},
+            'disaster recovery': {'weight': 0.05}
+        }
+        
+        # Load the HLDD content
+        self.load_hldd()
+    
+    def load_hldd(self):
+        """Load the HLDD content from the specified path"""
+        try:
+            if not os.path.exists(self.hldd_path):
+                logging.warning(f"HLDD file not found at path: {self.hldd_path}")
+                self.hldd_content = ""
+                return
+                
+            # Load the document content based on file extension
+            _, file_extension = os.path.splitext(self.hldd_path)
+            
+            if file_extension.lower() == '.docx':
+                self.hldd_content = self._read_docx(self.hldd_path)
+            elif file_extension.lower() == '.pdf':
+                self.hldd_content = self._read_pdf(self.hldd_path)
+            elif file_extension.lower() in ['.txt', '.md']:
+                self.hldd_content = self._read_text(self.hldd_path)
+            else:
+                logging.warning(f"Unsupported file format: {file_extension}")
+                self.hldd_content = ""
+                
+        except Exception as e:
+            logging.error(f"Error loading HLDD content: {str(e)}")
+            self.hldd_content = ""  # Set empty content on error
     
     def read_document(self, file_path):
         """Extract text content from various document formats"""
@@ -103,13 +226,37 @@ class HLDDAnalyzer:
         with open(file_path, 'r', encoding='utf-8') as file:
             return file.read()
     
-    def analyze_document(self, file_path):
+    def analyze_document(self, file_path=None):
         """
         Analyze HLDD document and return architecture evaluation results
+        
+        Args:
+            file_path (str, optional): Path to the HLDD document. If not provided,
+                                       uses the already loaded content.
+        
+        Returns:
+            dict: Analysis results
         """
         try:
             # Extract text from document
-            document_text = self.read_document(file_path)
+            if file_path:
+                document_text = self.read_document(file_path)
+            else:
+                # Use already loaded content
+                if not self.hldd_content:
+                    self.load_hldd()
+                document_text = self.hldd_content
+            
+            # Check if we have content to analyze
+            if not document_text:
+                return {
+                    'error': "No document content to analyze",
+                    'scores': {},
+                    'missing_components': [],
+                    'overall_score': 0,
+                    'acceptable': False,
+                    'recommendations': ["Please check the document file and try again."]
+                }
             
             # Run analysis
             results = {
@@ -134,6 +281,7 @@ class HLDDAnalyzer:
             return results
         
         except Exception as e:
+            logging.error(f"Error analyzing document: {str(e)}")
             return {
                 'error': str(e),
                 'scores': {},
@@ -197,11 +345,7 @@ class HLDDAnalyzer:
         return recommendations
 
 
-import docx
-import fitz  # PyMuPDF
-import pandas as pd
-import os
-import logging
+# Helper functions for document analysis
 
 def get_analyzer():
     """

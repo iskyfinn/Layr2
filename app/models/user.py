@@ -1,12 +1,25 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db, login_manager
+from app.extensions import db, login_manager
+
+
 from datetime import datetime
 
+# Import db dynamically when needed
+def get_db():
 
+
+    return db
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+
+    def __init__(self, username, email, role='engineer'):  # Added 'role' argument with a default
+        self.username = username
+        self.email = email
+        self.password_hash = None
+        self.role = role  # Initialize the role a
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -35,6 +48,15 @@ class User(UserMixin, db.Model):
     def is_architect(self):
         """Check if user is an architect"""
         return self.role == 'architect'
+
+    @classmethod
+    def create(cls, username, email, password, role='engineer'): # Added 'role' argument here as well
+        db = get_db()
+        user = cls(username, email, role=role)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return user
 
 @login_manager.user_loader
 def load_user(user_id):

@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
 from app.models.application import Application
 from app.models.arb_review import ARBReview, ARBMeeting
-from app import db
+from app.extensions import db, login_manager
+
 from sqlalchemy import func, and_, or_
 from datetime import datetime, timedelta
 

@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Generate HLDD - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-file-alt me-2"></i>Generate HLDD
+                <small class="text-muted">for {{ application.name }}</small>
+            </h2>
+            <p class="text-muted">Create a High Level Design Document with AI-assisted recommendations or manual customization</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Application
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-magic me-2"></i>HLDD Generation Method
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">AI-Assisted Generation</h5>
+                                    <p class="card-text text-muted">Quick HLDD generation with intelligent recommendations</p>
+                                    <button class="btn btn-primary" id="ai-generation-btn">
+                                        <i class="fas fa-magic me-2"></i>AI Generate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-edit fa-3x text-secondary mb-3"></i>
+                                    <h5 class="card-title">Manual Customization</h5>
+                                    <p class="card-text text-muted">Detailed, step-by-step HLDD creation</p>
+                                    <button class="btn btn-secondary" id="manual-generation-btn">
+                                        <i class="fas fa-pencil-alt me-2"></i>Manual Create
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Generation Form (Initially Hidden) -->
+            <div id="ai-generation-section" class="card d-none">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>AI-Assisted HLDD Generation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="ai-hldd-form">
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Application Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" placeholder="Provide a brief description of your application's purpose and key features">{{ application.description or '' }}</textarea>
+                            <small class="form-text text-muted">Help our AI understand your application's core purpose and functionality.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scope" class="form-label">Application Scope</label>
+                            <textarea class="form-control" id="scope" name="scope" rows="3" placeholder="Define the boundaries and key objectives of your application"></textarea>
+                            <small class="form-text text-muted">What does your application aim to achieve?</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Key Functions</label>
+                            <div id="ai-functions-container">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" name="functions" placeholder="Enter a key function">
+                                    <button type="button" class="btn btn-outline-secondary add-ai-function-btn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-magic me-2"></i>Generate AI HLDD
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Manual Generation Form (Initially Hidden) -->
+            <div id="manual-generation-section" class="d-none">
+                <!-- Your existing manual generation form goes here -->
+                <form method="POST" action="{{ url_for('applications.generate_hldd', app_id=application.id) }}">
+                    <!-- Existing form content from the previous generate_hldd.html -->
+                    <!-- First card (Basic Information) and all subsequent cards -->
+                    <!-- Entire existing content would be pasted here -->
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- AI Assistance Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>AI Assistance Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Provide a clear, concise description
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Include key business objectives
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Mention primary user roles
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Describe main application functions
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Highlight any specific requirements
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Generation Modal -->
+<div class="modal fade" id="aiGenerationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-magic me-2"></i>AI HLDD Generation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-generation-preview">
+                    <!-- AI generated HLDD preview will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="confirm-ai-hldd">
+                    <i class="fas fa-check me-2"></i>Confirm and Generate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const aiGenerationBtn = document.getElementById('ai-generation-btn');
+    const manualGenerationBtn = document.getElementById('manual-generation-btn');
+    const aiGenerationSection = document.getElementById('ai-generation-section');
+    const manualGenerationSection = document.getElementById('manual-generation-section');
+    const aiHLDDForm = document.getElementById('ai-hldd-form');
+    const aiGenerationModal = new bootstrap.Modal(document.getElementById('aiGenerationModal'));
+    const aiGenerationPreview = document.getElementById('ai-generation-preview');
+    const confirmAIHLDDBtn = document.getElementById('confirm-ai-hldd');
+
+    // Toggle between AI and Manual generation
+    aiGenerationBtn.addEventListener('click', function() {
+        aiGenerationSection.classList.remove('d-none');
+        manualGenerationSection.classList.add('d-none');
+    });
+
+    manualGenerationBtn.addEventListener('click', function() {
+        aiGenerationSection.classList.add('d-none');
+        manualGenerationSection.classList.remove('d-none');
+    });
+
+    // Add function dynamically in AI form
+    const aiAddFunctionBtn = document.querySelector('.add-ai-function-btn');
+    const aiFunctionsContainer = document.getElementById('ai-functions-container');
+
+    aiAddFunctionBtn.addEventListener('click', function() {
+        const newInputGroup = document.createElement('div');
+        newInputGroup.className = 'input-group mb-2';
+        newInputGroup.innerHTML = `
+            <input type="text" class="form-control" name="functions" placeholder="Enter a key function">
+            <button type="button" class="btn btn-outline-danger remove-ai-function-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        aiFunctionsContainer.appendChild(newInputGroup);
+
+        // Add remove functionality
+        newInputGroup.querySelector('.remove-ai-function-btn').addEventListener('click', function() {
+            aiFunctionsContainer.removeChild(newInputGroup);
+        });
+    });
+
+    // AI HLDD Generation submission
+    aiHLDDForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Collect form data
+        const formData = new FormData(aiHLDDForm);
+        const data = {
+            description: formData.get('description'),
+            scope: formData.get('scope'),
+            functions: formData.getAll('functions')
+        };
+
+        // Send AI generation request
+        fetch(`/applications/{{ application.id }}/generate_hldd`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Preview AI-generated HLDD details
+                aiGenerationPreview.innerHTML = `
+                    <h4>AI-Generated HLDD Preview</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Application Name:</strong> ${result.hldd_data.basicInfo.name}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Purpose:</strong> ${result.hldd_data.basicInfo.purpose}
+                        </div>
+                    </div>
+                    <hr>
+                    <h5>Key Components</h5>
+                    <ul>
+                        ${result.hldd_data.architectureInfo.components.map(comp => 
+                            `<li><strong>${comp.name}:</strong> ${comp.description}</li>`
+                        ).join('')}
+                    </ul>
+                `;
+                aiGenerationModal.show();
+            } else {
+                alert('Failed to generate HLDD: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating HLDD');
+        });
+    });
+
+    // Confirm AI-generated HLDD
+    confirmAIHLDDBtn.addEventListener('click', function() {
+        // Trigger final HLDD generation
+        aiGenerationModal.hide();
+        window.location.href = "{{ url_for('applications.application_detail', app_id=application.id) }}";
+    });
+});
+</script>
+{% endblock %}

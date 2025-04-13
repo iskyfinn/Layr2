@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Architecture Recommendations - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-lightbulb me-2"></i>Architecture Recommendations
+            <small class="text-muted">for {{ application.name }}</small>
+        </h2>
+        <p class="text-muted">Tailored architecture recommendations based on your use case and requirements</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Application
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Use Case Analysis -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Use Case Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Identified Use Case Category</h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        <strong>{{ recommendations.identified_use_case|replace('_', ' ')|title }}</strong>
+                    </div>
+                    <p class="small text-muted">Based on your application description and requirements</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Requirement Priorities</h6>
+                    <div class="row">
+                        {% for category, priority in recommendations.requirement_priorities.items() %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>{{ category|capitalize|replace('_', ' ') }}</span>
+                                    <span class="badge bg-secondary">{{ "%.0f"|format(priority * 100) }}%</span>
+                                </div>
+                                <div class="progress" style="height: 15px;">
+                                    <div class="progress-bar {% if priority >= 0.7 %}bg-primary{% elif priority >= 0.4 %}bg-info{% else %}bg-secondary{% endif %}" 
+                                         role="progressbar" style="width: {{ priority * 100 }}%;" 
+                                         aria-valuenow="{{ priority * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommended Architectures -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Recommended Architectures</h5>
+            </div>
+            <div class="card-body">
+                {% for recommendation in recommendations.recommended_patterns %}
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 text-primary">{{ recommendation.pattern|replace('_', ' ')|title }}</h5>
+                                <span class="badge bg-primary rounded-pill">
+                                    {{ "%.0f"|format(recommendation.score * 100) }}% Match
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="lead">{{ recommendation.details.description }}</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6 class="border-bottom pb-2">Best For</h6>
+                                    <ul class="list-unstyled">
+                                        {% for strength in recommendation.details.best_for %}
+                                            <li class="mb-2">
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                                {{ strength|capitalize }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="border-bottom pb-2">Caution Areas</h6>
+                                    <ul class="list-unstyled">
+                                        {% for caution in recommendation.details.caution_for %}
+                                            <li class="mb-2">
+                                                <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                                {{ caution|capitalize }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h6 class="border-bottom pb-2">Key Components</h6>
+                                <div class="row">
+                                    {% for component in recommendation.details.components %}
+                                        <div class="col-md-6">
+                                            <p>
+                                                <i class="fas fa-puzzle-piece text-secondary me-2"></i>
+                                                {{ component }}
+                                            </p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h6 class="border-bottom pb-2">Recommendation Reasoning</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for reason in recommendation.reasoning %}
+                                        <li class="list-group-item bg-light">
+                                            <i class="fas fa-info-circle text-primary me-2"></i>
+                                            {{ reason }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Cloud Provider Recommendations -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cloud me-2"></i>Cloud Provider Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6>Top Cloud Provider Recommendations</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">Primary Recommendation: {{ recommendations.cloud_recommendations.primary|upper }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">
+                                        <strong>Score: {{ "%.0f"|format(recommendations.cloud_recommendations.scores[recommendations.cloud_recommendations.primary] * 100) }}%</strong>
+                                    </p>
+                                    <p class="mt-3 mb-0"><strong>Key Strengths:</strong></p>
+                                    <ul class="mb-0">
+                                        {% for strength in recommendations.cloud_recommendations.overall_ranking[0].key_strengths %}
+                                            <li>{{ strength }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Secondary Recommendation: {{ recommendations.cloud_recommendations.secondary|upper }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">
+                                        <strong>Score: {{ "%.0f"|format(recommendations.cloud_recommendations.scores[recommendations.cloud_recommendations.secondary] * 100) }}%</strong>
+                                    </p>
+                                    <p class="mt-3 mb-0"><strong>Key Strengths:</strong></p>
+                                    <ul class="mb-0">
+                                        {% for strength in recommendations.cloud_recommendations.overall_ranking[1].key_strengths %}
+                                            <li>{{ strength }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Focus Areas</h6>
+                    <p class="small text-muted">Based on your use case, the following areas were given special consideration:</p>
+                    <div class="d-flex flex-wrap">
+                        {% for area in recommendations.cloud_recommendations.focus_areas %}
+                            <span class="badge bg-info me-2 mb-2">{{ area|capitalize }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Application Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Application Info</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ application.name }}</p>
+                <p><strong>Status:</strong> <span class="status-badge">{{ application.status }}</span></p>
+                
+                <div class="mt-3">
+                    <h6>Use Case</h6>
+                    <p class="small">{{ application.use_case }}</p>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Requirements</h6>
+                    <p class="small">{{ application.requirements }}</p>
+                </div>
+                
+                {% if application.baseline_systems %}
+                    <div class="mt-3">
+                        <h6>Baseline Systems</h6>
+                        <p class="small">{{ application.baseline_systems }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-forward me-2"></i>Next Steps</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('applications.modernization_strategies', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-sync-alt me-2"></i>Explore Modernization Strategies</h6>
+                        </div>
+                        <small>Discover ways to modernize your architecture</small>
+                    </a>
+                    <a href="{{ url_for('applications.patterns_analysis', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-puzzle-piece me-2"></i>Analyze Patterns & Anti-patterns</h6>
+                        </div>
+                        <small>Evaluate architecture patterns in your application</small>
+                    </a>
+                    <a href="{{ url_for('applications.generate_diagram', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-project-diagram me-2"></i>Generate Architecture Diagram</h6>
+                        </div>
+                        <small>Create a visual representation of the architecture</small>
+                    </a>
+                    <a href="{{ url_for('applications.generate_hldd', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-file-alt me-2"></i>Generate HLDD</h6>
+                        </div>
+                        <small>Create an HLDD based on recommendations</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Architecture Resources -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-book me-2"></i>Architecture Resources</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action" id="ask-question-btn">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-question-circle me-2"></i>Ask Architecture Question</h6>
+                        </div>
+                        <small>Get answers to architecture questions</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden input for JS -->
+<input type="hidden" id="application-id" value="{{ application.id }}">
+
+<!-- Ask Question Modal -->
+<div class="modal fade" id="askQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Ask Architecture Question</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="question" class="form-label">Your Question</label>
+                    <textarea class="form-control" id="question" rows="3" placeholder="E.g., What are the pros and cons of microservices architecture?"></textarea>
+                </div>
+                <div id="answer-container" class="d-none">
+                    <hr>
+                    <h6><i class="fas fa-lightbulb me-2"></i>Answer</h6>
+                    <div id="answer-content" class="p-3 bg-light rounded">
+                        <!-- Answer will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submit-question">
+                    <i class="fas fa-paper-plane me-2"></i>Ask Question
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/architecture_recommendations.js') }}"></script>
+{% endblock %}

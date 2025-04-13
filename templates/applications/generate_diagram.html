@@ -1,0 +1,1018 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Generate Diagram - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-project-diagram me-2"></i>Generate Diagram
+            <small class="text-muted">for {{ application.name }}</small>
+        </h2>
+        <p class="text-muted">Create architecture diagrams to visualize your application design</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Application
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="diagramTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                            <i class="fas fa-sitemap me-1"></i> System Architecture
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="deployment-tab" data-bs-toggle="tab" data-bs-target="#deployment" type="button" role="tab">
+                            <i class="fas fa-server me-1"></i> Deployment
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="data-model-tab" data-bs-toggle="tab" data-bs-target="#data-model" type="button" role="tab">
+                            <i class="fas fa-database me-1"></i> Data Model
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sequence-tab" data-bs-toggle="tab" data-bs-target="#sequence" type="button" role="tab">
+                            <i class="fas fa-exchange-alt me-1"></i> Sequence
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mermaid-tab" data-bs-toggle="tab" data-bs-target="#mermaid" type="button" role="tab">
+                            <i class="fas fa-code me-1"></i> Mermaid
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="diagramTabContent">
+                    <!-- System Architecture Diagram -->
+                    <div class="tab-pane fade show active" id="system" role="tabpanel" aria-labelledby="system-tab">
+                        <h5 class="card-title">System Architecture Diagram</h5>
+                        <p class="text-muted">Visualize the components of your system and their interactions</p>
+                        
+                        <form id="system-arch-form">
+                            <input type="hidden" name="diagram_type" value="system_architecture">
+                            
+                            <div class="mb-4">
+                                <h6>Components</h6>
+                                <div id="system-components-container">
+                                    <div class="card mb-3 component-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Component Name</label>
+                                                    <input type="text" class="form-control" name="component_name" value="Frontend" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Component Type</label>
+                                                    <select class="form-select" name="component_type">
+                                                        <option value="component">Component</option>
+                                                        <option value="database">Database</option>
+                                                        <option value="service">Service</option>
+                                                        <option value="external">External System</option>
+                                                        <option value="user">User/Client</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" name="component_description" value="User interface layer">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-component-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 component-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Component Name</label>
+                                                    <input type="text" class="form-control" name="component_name" value="API Gateway" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Component Type</label>
+                                                    <select class="form-select" name="component_type">
+                                                        <option value="component">Component</option>
+                                                        <option value="database">Database</option>
+                                                        <option value="service" selected>Service</option>
+                                                        <option value="external">External System</option>
+                                                        <option value="user">User/Client</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" name="component_description" value="Routes requests to appropriate services">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-component-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 component-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Component Name</label>
+                                                    <input type="text" class="form-control" name="component_name" value="Database" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Component Type</label>
+                                                    <select class="form-select" name="component_type">
+                                                        <option value="component">Component</option>
+                                                        <option value="database" selected>Database</option>
+                                                        <option value="service">Service</option>
+                                                        <option value="external">External System</option>
+                                                        <option value="user">User/Client</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" name="component_description" value="Stores application data">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-component-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-system-component-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Component
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Connections</h6>
+                                <div id="system-connections-container">
+                                    <div class="card mb-3 connection-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">From</label>
+                                                    <select class="form-select component-select" name="connection_from" required>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API Gateway">API Gateway</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">To</label>
+                                                    <select class="form-select component-select" name="connection_to" required>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API Gateway" selected>API Gateway</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="connection_type">
+                                                        <option value="default">One-way</option>
+                                                        <option value="bidirectional">Bi-directional</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" name="connection_description" value="HTTP/REST">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-connection-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 connection-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">From</label>
+                                                    <select class="form-select component-select" name="connection_from" required>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API Gateway" selected>API Gateway</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">To</label>
+                                                    <select class="form-select component-select" name="connection_to" required>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API Gateway">API Gateway</option>
+                                                        <option value="Database" selected>Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="connection_type">
+                                                        <option value="default">One-way</option>
+                                                        <option value="bidirectional" selected>Bi-directional</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" name="connection_description" value="Database queries/responses">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-connection-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-system-connection-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Connection
+                                </button>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary generate-diagram-btn" data-form="system-arch-form">
+                                    <i class="fas fa-cog me-1"></i> Generate Diagram
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Deployment Diagram -->
+                    <div class="tab-pane fade" id="deployment" role="tabpanel" aria-labelledby="deployment-tab">
+                        <h5 class="card-title">Deployment Diagram</h5>
+                        <p class="text-muted">Visualize how your system is deployed across different environments</p>
+                        
+                        <form id="deployment-form">
+                            <input type="hidden" name="diagram_type" value="deployment">
+                            
+                            <div class="mb-4">
+                                <h6>Environments</h6>
+                                <div id="deployment-environments-container">
+                                    <div class="card mb-3 environment-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Environment Name</label>
+                                                    <input type="text" class="form-control" name="environment_name" value="Production" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Description</label>
+                                                    <input type="text" class="form-control" name="environment_description" value="Live environment">
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-environment-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 environment-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Environment Name</label>
+                                                    <input type="text" class="form-control" name="environment_name" value="Development" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Description</label>
+                                                    <input type="text" class="form-control" name="environment_description" value="Dev environment">
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-environment-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-deployment-environment-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Environment
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Components</h6>
+                                <div id="deployment-components-container">
+                                    <div class="card mb-3 deployment-component-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Component Name</label>
+                                                    <input type="text" class="form-control" name="component_name" value="Web Server" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Component Type</label>
+                                                    <select class="form-select" name="component_type">
+                                                        <option value="component">Component</option>
+                                                        <option value="database">Database</option>
+                                                        <option value="service" selected>Service</option>
+                                                        <option value="external">External System</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Environment</label>
+                                                    <select class="form-select environment-select" name="component_env" required>
+                                                        <option value="Production" selected>Production</option>
+                                                        <option value="Development">Development</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Host</label>
+                                                    <input type="text" class="form-control" name="component_host" value="VM1">
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-deployment-component-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 deployment-component-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Component Name</label>
+                                                    <input type="text" class="form-control" name="component_name" value="Database Server" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Component Type</label>
+                                                    <select class="form-select" name="component_type">
+                                                        <option value="component">Component</option>
+                                                        <option value="database" selected>Database</option>
+                                                        <option value="service">Service</option>
+                                                        <option value="external">External System</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Environment</label>
+                                                    <select class="form-select environment-select" name="component_env" required>
+                                                        <option value="Production" selected>Production</option>
+                                                        <option value="Development">Development</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Host</label>
+                                                    <input type="text" class="form-control" name="component_host" value="VM2">
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-deployment-component-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-deployment-component-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Component
+                                </button>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary generate-diagram-btn" data-form="deployment-form">
+                                    <i class="fas fa-cog me-1"></i> Generate Diagram
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Data Model Diagram -->
+                    <div class="tab-pane fade" id="data-model" role="tabpanel" aria-labelledby="data-model-tab">
+                        <h5 class="card-title">Data Model Diagram</h5>
+                        <p class="text-muted">Visualize your data entities and their relationships</p>
+                        
+                        <form id="data-model-form">
+                            <input type="hidden" name="diagram_type" value="data_model">
+                            
+                            <div class="mb-4">
+                                <h6>Entities</h6>
+                                <div id="data-entities-container">
+                                    <div class="card mb-3 entity-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Entity Name</label>
+                                                    <input type="text" class="form-control" name="entity_name" value="User" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Description</label>
+                                                    <input type="text" class="form-control" name="entity_description" value="User information">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Attributes</label>
+                                                <div class="input-group mb-2">
+                                                    <input type="text" class="form-control" placeholder="id" value="id">
+                                                    <span class="input-group-text">type</span>
+                                                    <select class="form-select" style="max-width: 150px;">
+                                                        <option value="int" selected>int</option>
+                                                        <option value="string">string</option>
+                                                        <option value="date">date</option>
+                                                        <option value="boolean">boolean</option>
+                                                    </select>
+                                                    <span class="input-group-text">PK</span>
+                                                    <div class="input-group-text">
+                                                        <input class="form-check-input mt-0" type="checkbox" checked>
+                                                    </div>
+                                                </div>
+                                                <div class="input-group mb-2">
+                                                    <input type="text" class="form-control" placeholder="username" value="username">
+                                                    <span class="input-group-text">type</span>
+                                                    <select class="form-select" style="max-width: 150px;">
+                                                        <option value="int">int</option>
+                                                        <option value="string" selected>string</option>
+                                                        <option value="date">date</option>
+                                                        <option value="boolean">boolean</option>
+                                                    </select>
+                                                    <span class="input-group-text">PK</span>
+                                                    <div class="input-group-text">
+                                                        <input class="form-check-input mt-0" type="checkbox">
+                                                    </div>
+                                                </div>
+                                                
+                                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2">
+                                                    <i class="fas fa-plus me-1"></i> Add Attribute
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-entity-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 entity-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Entity Name</label>
+                                                    <input type="text" class="form-control" name="entity_name" value="Application" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Description</label>
+                                                    <input type="text" class="form-control" name="entity_description" value="Application information">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Attributes</label>
+                                                <div class="input-group mb-2">
+                                                    <input type="text" class="form-control" placeholder="id" value="id">
+                                                    <span class="input-group-text">type</span>
+                                                    <select class="form-select" style="max-width: 150px;">
+                                                        <option value="int" selected>int</option>
+                                                        <option value="string">string</option>
+                                                        <option value="date">date</option>
+                                                        <option value="boolean">boolean</option>
+                                                    </select>
+                                                    <span class="input-group-text">PK</span>
+                                                    <div class="input-group-text">
+                                                        <input class="form-check-input mt-0" type="checkbox" checked>
+                                                    </div>
+                                                </div>
+                                                <div class="input-group mb-2">
+                                                    <input type="text" class="form-control" placeholder="user_id" value="user_id">
+                                                    <span class="input-group-text">type</span>
+                                                    <select class="form-select" style="max-width: 150px;">
+                                                        <option value="int" selected>int</option>
+                                                        <option value="string">string</option>
+                                                        <option value="date">date</option>
+                                                        <option value="boolean">boolean</option>
+                                                    </select>
+                                                    <span class="input-group-text">FK</span>
+                                                    <div class="input-group-text">
+                                                        <input class="form-check-input mt-0" type="checkbox" checked>
+                                                    </div>
+                                                </div>
+                                                
+                                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2">
+                                                    <i class="fas fa-plus me-1"></i> Add Attribute
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-entity-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-entity-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Entity
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Relationships</h6>
+                                <div id="entity-relationships-container">
+                                    <div class="card mb-3 relationship-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">From Entity</label>
+                                                    <select class="form-select entity-select" name="relationship_from" required>
+                                                        <option value="User" selected>User</option>
+                                                        <option value="Application">Application</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">To Entity</label>
+                                                    <select class="form-select entity-select" name="relationship_to" required>
+                                                        <option value="User">User</option>
+                                                        <option value="Application" selected>Application</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="relationship_type">
+                                                        <option value="one-to-one">One to One</option>
+                                                        <option value="one-to-many" selected>One to Many</option>
+                                                        <option value="many-to-many">Many to Many</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Description</label>
+                                                <input type="text" class="form-control" name="relationship_description" value="User has many applications">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-relationship-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-relationship-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Relationship
+                                </button>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary generate-diagram-btn" data-form="data-model-form">
+                                    <i class="fas fa-cog me-1"></i> Generate Diagram
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Sequence Diagram -->
+                    <div class="tab-pane fade" id="sequence" role="tabpanel" aria-labelledby="sequence-tab">
+                        <h5 class="card-title">Sequence Diagram</h5>
+                        <p class="text-muted">Visualize the sequence of interactions between components</p>
+                        
+                        <form id="sequence-form">
+                            <input type="hidden" name="diagram_type" value="sequence">
+                            
+                            <div class="mb-4">
+                                <h6>Participants</h6>
+                                <div id="sequence-participants-container">
+                                    <div class="card mb-3 participant-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Participant Name</label>
+                                                    <input type="text" class="form-control" name="participant_name" value="User" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="participant_type">
+                                                        <option value="actor" selected>Actor</option>
+                                                        <option value="component">Component</option>
+                                                        <option value="database">Database</option>
+                                                        <option value="service">Service</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-participant-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 participant-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Participant Name</label>
+                                                    <input type="text" class="form-control" name="participant_name" value="Frontend" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="participant_type">
+                                                        <option value="actor">Actor</option>
+                                                        <option value="component" selected>Component</option>
+                                                        <option value="database">Database</option>
+                                                        <option value="service">Service</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-participant-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 participant-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Participant Name</label>
+                                                    <input type="text" class="form-control" name="participant_name" value="API" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="participant_type">
+                                                        <option value="actor">Actor</option>
+                                                        <option value="component">Component</option>
+                                                        <option value="database">Database</option>
+                                                        <option value="service" selected>Service</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-participant-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 participant-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Participant Name</label>
+                                                    <input type="text" class="form-control" name="participant_name" value="Database" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Type</label>
+                                                    <select class="form-select" name="participant_type">
+                                                        <option value="actor">Actor</option>
+                                                        <option value="component">Component</option>
+                                                        <option value="database" selected>Database</option>
+                                                        <option value="service">Service</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-participant-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-participant-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Participant
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Messages</h6>
+                                <div id="sequence-messages-container">
+                                    <div class="card mb-3 message-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">From</label>
+                                                    <select class="form-select participant-select" name="message_from" required>
+                                                        <option value="User" selected>User</option>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API">API</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">To</label>
+                                                    <select class="form-select participant-select" name="message_to" required>
+                                                        <option value="User">User</option>
+                                                        <option value="Frontend" selected>Frontend</option>
+                                                        <option value="API">API</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Order</label>
+                                                    <input type="number" class="form-control" name="message_order" value="1" min="1">
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Message</label>
+                                                <input type="text" class="form-control" name="message_text" value="Request page">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-message-btn" style="display: none;">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 message-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">From</label>
+                                                    <select class="form-select participant-select" name="message_from" required>
+                                                        <option value="User">User</option>
+                                                        <option value="Frontend" selected>Frontend</option>
+                                                        <option value="API">API</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">To</label>
+                                                    <select class="form-select participant-select" name="message_to" required>
+                                                        <option value="User">User</option>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API" selected>API</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Order</label>
+                                                    <input type="number" class="form-control" name="message_order" value="2" min="1">
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Message</label>
+                                                <input type="text" class="form-control" name="message_text" value="Request data">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-message-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mb-3 message-card">
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">From</label>
+                                                    <select class="form-select participant-select" name="message_from" required>
+                                                        <option value="User">User</option>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API" selected>API</option>
+                                                        <option value="Database">Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label">To</label>
+                                                    <select class="form-select participant-select" name="message_to" required>
+                                                        <option value="User">User</option>
+                                                        <option value="Frontend">Frontend</option>
+                                                        <option value="API">API</option>
+                                                        <option value="Database" selected>Database</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Order</label>
+                                                    <input type="number" class="form-control" name="message_order" value="3" min="1">
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Message</label>
+                                                <input type="text" class="form-control" name="message_text" value="Query data">
+                                            </div>
+                                            <div class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-message-btn">
+                                                    <i class="fas fa-trash-alt me-1"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-message-btn">
+                                    <i class="fas fa-plus me-1"></i> Add Message
+                                </button>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary generate-diagram-btn" data-form="sequence-form">
+                                    <i class="fas fa-cog me-1"></i> Generate Diagram
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Mermaid Diagram -->
+                    <div class="tab-pane fade" id="mermaid" role="tabpanel" aria-labelledby="mermaid-tab">
+                        <h5 class="card-title">Mermaid Diagram</h5>
+                        <p class="text-muted">Create custom diagrams using Mermaid syntax</p>
+                        
+                        <form id="mermaid-form">
+                            <input type="hidden" name="diagram_type" value="mermaid">
+                            
+                            <div class="mb-3">
+                                <label for="mermaid-editor" class="form-label">Mermaid Code</label>
+                                <textarea class="form-control font-monospace" id="mermaid-editor" name="mermaid_code" rows="12"></textarea>
+                                <div class="form-text">
+                                    Write your Mermaid diagram code here. <a href="https://mermaid-js.github.io/mermaid/#/" target="_blank">Mermaid documentation</a>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 text-end">
+                                <button type="button" class="btn btn-outline-primary" id="update-mermaid-btn">
+                                    <i class="fas fa-sync-alt me-1"></i> Update Preview
+                                </button>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Preview</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="mermaid-preview" class="mermaid text-center">
+                                        <!-- Mermaid preview will be rendered here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary generate-diagram-btn" data-form="mermaid-form">
+                                    <i class="fas fa-save me-1"></i> Save Diagram
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Result Area -->
+        <div id="diagram-result"></div>
+    </div>
+    
+    <div class="col-md-3">
+        <!-- Help Panel -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Help</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="helpAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                System Architecture Diagram
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <p>A system architecture diagram shows the main components of your system and how they interact:</p>
+                                <ul>
+                                    <li>Add components like frontend, backend, databases, etc.</li>
+                                    <li>Define connections between components</li>
+                                    <li>Specify the interaction type (one-way or bidirectional)</li>
+                                </ul>
+                                <p>This diagram helps stakeholders understand the high-level structure of your application.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Deployment Diagram
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <p>A deployment diagram shows how your application is deployed across different environments:</p>
+                                <ul>
+                                    <li>Define environments (Production, Development, etc.)</li>
+                                    <li>Add components and assign them to environments</li>
+                                    <li>Specify component types and hosts</li>
+                                </ul>
+                                <p>This helps in understanding the infrastructure requirements and deployment strategy.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Data Model Diagram
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <p>A data model diagram visualizes your data entities and their relationships:</p>
+                                <ul>
+                                    <li>Define entities with attributes and types</li>
+                                    <li>Specify primary keys and foreign keys</li>
+                                    <li>Create relationships between entities (one-to-one, one-to-many, many-to-many)</li>
+                                </ul>
+                                <p>This diagram helps in understanding the data structure of your application.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                Sequence Diagram
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <p>A sequence diagram shows the sequence of interactions between components:</p>
+                                <ul>
+                                    <li>Define participants (actors, components, services, etc.)</li>
+                                    <li>Create messages between participants in sequential order</li>
+                                    <li>Specify the direction and content of each message</li>
+                                </ul>
+                                <p>This helps in understanding the flow of operations in your application.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFive">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                Mermaid Diagram
+                            </button>
+                        </h2>
+                        <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                <p>Mermaid lets you create custom diagrams using a simple text-based syntax:</p>
+                                <ul>
+                                    <li>Create flowcharts, sequence diagrams, class diagrams, etc.</li>
+                                    <li>Customize styles and layouts</li>
+                                    <li>Preview your diagram in real-time</li>
+                                </ul>
+                                <p>This provides flexibility for creating any type of diagram not covered by the other options.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Diagrams -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Diagrams</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% if application.diagrams %}
+                        {% for diagram in application.diagrams[:5] %}
+                            <a href="{{ url_for('applications.view_diagram', diagram_id=diagram.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ diagram.title or 'Untitled Diagram' }}</h6>
+                                    <small class="text-muted">{{ diagram.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <small>{{ diagram.diagram_type | title }} Diagram</small>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item">
+                            <p class="mb-0 text-muted">No diagrams created yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/generate_diagram.js') }}"></script>
+{% endblock %}

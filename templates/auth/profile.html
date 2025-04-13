@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>User Profile</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>Username:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.username }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>Email:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.email }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>Role:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.role | title }}
+                        </div>
+                    </div>
+                    {% if user.last_login %}
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <strong>Last Login:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-12 text-center">
+                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">Edit Profile</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

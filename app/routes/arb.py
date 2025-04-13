@@ -3,7 +3,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app.models.application import Application
 from app.models.arb_review import ARBReview, ARBMeeting, ARBMeetingAgendaItem
-from app import db
+from app.extensions import db, login_manager
+
 
 arb_bp = Blueprint('arb', __name__)
 

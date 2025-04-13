@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Review {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-clipboard-check me-2"></i>Review Application
+            <small class="text-muted">{{ application.name }}</small>
+        </h2>
+        <p class="text-muted">Architecture Review Board Assessment</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.application_detail', app_id=application.id) }}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-eye me-1"></i> View Application
+        </a>
+        <a href="{{ url_for('arb.applications_list') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Application Overview -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Application Overview</h5>
+            </div>
+            <div class="card-body">
+                <!-- Application overview content -->
+            </div>
+        </div>
+        
+        <!-- Review Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Submit Review</h5>
+            </div>
+            <div class="card-body">
+                <!-- Review form -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Architecture Insights -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Architecture Insights</h5>
+            </div>
+            <div class="card-body">
+                <div id="arb-insights">
+                    <!-- Architecture insights content -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Review Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-poll me-2"></i>Review Status</h5>
+            </div>
+            <div class="card-body">
+                <!-- Review status content -->
+            </div>
+        </div>
+        
+        <!-- Make Final Decision -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-gavel me-2"></i>Make Final Decision</h5>
+            </div>
+            <div class="card-body">
+                <!-- Final decision form -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/review_application.js') }}"></script>
+{% endblock %}

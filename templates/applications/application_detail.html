@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - {{ application.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="fas fa-project-diagram me-2"></i>{{ application.name }}
+            <span class="status-badge ms-2">{{ application.status }}</span>
+        </h2>
+        <p class="text-muted">Created on {{ application.created_at.strftime('%Y-%m-%d') }}</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group">
+            {% if application.is_in_pti_stage() and application.user_id == current_user.id %}
+                <a href="{{ url_for('applications.edit_application', app_id=application.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-1"></i> Edit
+                </a>
+                {% if application.hldd_path %}
+                    <a href="{{ url_for('applications.analyze_hldd', app_id=application.id) }}" class="btn btn-outline-info">
+                        <i class="fas fa-clipboard-check me-1"></i> Analyze HLDD
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('applications.upload_hldd', app_id=application.id) }}" class="btn btn-outline-success">
+                        <i class="fas fa-upload me-1"></i> Upload HLDD
+                    </a>
+                {% endif %}
+                <form action="{{ url_for('applications.submit_for_review', app_id=application.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Submit for Review
+                    </button>
+                </form>
+            {% endif %}
+            {% if application.is_in_review_stage() and current_user.is_arb_member() %}
+                <a href="{{ url_for('applications.review_application', app_id=application.id) }}" class="btn btn-primary">
+                    <i class="fas fa-clipboard-check me-1"></i> Review Application
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Application Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="appTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                            <i class="fas fa-info-circle me-1"></i> Details
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="architecture-tab" data-bs-toggle="tab" data-bs-target="#architecture" type="button" role="tab">
+                            <i class="fas fa-sitemap me-1"></i> Architecture
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs" type="button" role="tab">
+                            <i class="fas fa-file-alt me-1"></i> Documentation
+                        </button>
+                    </li>
+                    {% if current_user.is_arb_member() or application.user_id == current_user.id %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">
+                            <i class="fas fa-comments me-1"></i> Reviews
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="appTabContent">
+                    <!-- Details Tab -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                        <h5 class="card-title">Application Description</h5>
+                        <p>{{ application.description or 'No description provided.' }}</p>
+                        
+                        <h5 class="mt-4">Use Case</h5>
+                        <p>{{ application.use_case or 'No use case specified.' }}</p>
+                        
+                        <h5 class="mt-4">Baseline Systems</h5>
+                        <p>{{ application.baseline_systems or 'No baseline systems specified.' }}</p>
+                        
+                        <h5 class="mt-4">Requirements</h5>
+                        <p>{{ application.requirements or 'No requirements specified.' }}</p>
+                    </div>
+                    
+                    <!-- Architecture Tab -->
+                    <div class="tab-pane fade" id="architecture" role="tabpanel" aria-labelledby="architecture-tab">
+                        {% if application.architecture_score is not none %}
+                            <div class="mb-4">
+                                <h5>Architecture Score</h5>
+                                <div class="progress" style="height: 25px;">
+                                    {% if application.architecture_score >= 0.7 %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ application.architecture_score * 100 }}%;">
+                                            {{ "%.0f"|format(application.architecture_score * 100) }}%
+                                        </div>
+                                    {% elif application.architecture_score >= 0.4 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ application.architecture_score * 100 }}%;">
+                                            {{ "%.0f"|format(application.architecture_score * 100) }}%
+                                        </div>
+                                    {% else %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ application.architecture_score * 100 }}%;">
+                                            {{ "%.0f"|format(application.architecture_score * 100) }}%
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Based on HLDD analysis</small>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> No architecture analysis available. 
+                                <a href="{{ url_for('applications.upload_hldd', app_id=application.id) }}">Upload HLDD</a> for analysis.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Architecture Recommendations</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="{{ url_for('applications.recommend_architecture', app_id=application.id) }}" class="btn btn-outline-primary btn-sm mb-3">
+                                            <i class="fas fa-lightbulb me-1"></i> Get Recommendations
+                                        </a>
+                                        <p class="small text-muted">
+                                            Get architecture recommendations based on your application's use case and requirements.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Modernization Strategies</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="{{ url_for('applications.modernization_strategies', app_id=application.id) }}" class="btn btn-outline-primary btn-sm mb-3">
+                                            <i class="fas fa-sync-alt me-1"></i> Explore Strategies
+                                        </a>
+                                        <p class="small text-muted">
+                                            Discover strategies to modernize your application architecture.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Patterns & Anti-patterns</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="{{ url_for('applications.patterns_analysis', app_id=application.id) }}" class="btn btn-outline-primary btn-sm mb-3">
+                                            <i class="fas fa-puzzle-piece me-1"></i> Analyze Patterns
+                                        </a>
+                                        <p class="small text-muted">
+                                            Evaluate architecture patterns and anti-patterns in your application.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Generate Diagrams</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="{{ url_for('applications.generate_diagram', app_id=application.id) }}" class="btn btn-outline-primary btn-sm mb-3">
+                                            <i class="fas fa-project-diagram me-1"></i> Create Diagrams
+                                        </a>
+                                        <p class="small text-muted">
+                                            Create architecture and deployment diagrams for your application.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Documentation Tab -->
+                    <div class="tab-pane fade" id="docs" role="tabpanel" aria-labelledby="docs-tab">
+                        {% if application.hldd_path %}
+                            <div class="alert alert-success mb-4">
+                                <i class="fas fa-check-circle me-2"></i> HLDD uploaded on {{ application.updated_at.strftime('%Y-%m-%d') }}
+                            </div>
+                            
+                            <h5>HLDD Actions</h5>
+                            <div class="btn-group mb-4">
+                                <a href="{{ url_for('applications.analyze_hldd', app_id=application.id) }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-search me-1"></i> Analyze HLDD
+                                </a>
+                                <a href="#" class="btn btn-outline-secondary" onclick="alert('Download functionality would be implemented here');">
+                                    <i class="fas fa-download me-1"></i> Download HLDD
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-info-circle me-2"></i> No HLDD has been uploaded yet.
+                            </div>
+                            
+                            <div class="d-grid gap-2 mb-4">
+                                <a href="{{ url_for('applications.upload_hldd', app_id=application.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-upload me-1"></i> Upload HLDD
+                                </a>
+                                <a href="{{ url_for('applications.generate_hldd', app_id=application.id) }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-file-alt me-1"></i> Generate HLDD
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        <h5 class="mt-4">Other Documentation</h5>
+                        <div class="list-group">
+                            <a href="{{ url_for('applications.generate_hldd', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1"><i class="fas fa-file-alt me-2"></i>High Level Design Document</h6>
+                                </div>
+                                <small>Create or update HLDD based on application details</small>
+                            </a>
+                            <a href="{{ url_for('applications.generate_diagram', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1"><i class="fas fa-project-diagram me-2"></i>Architecture Diagrams</h6>
+                                </div>
+                                <small>Generate system architecture and deployment diagrams</small>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Reviews Tab -->
+                    {% if current_user.is_arb_member() or application.user_id == current_user.id %}
+                    <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                        {% if application.reviews.count() > 0 %}
+                            <h5>ARB Reviews</h5>
+                            {% for review in application.reviews %}
+                                <div class="card mb-3 {% if review.vote == 'Approve' %}border-success{% elif review.vote == 'Reject' %}border-danger{% else %}border-warning{% endif %}">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ review.reviewer.username }}</strong> - 
+                                            <span class="badge {% if review.vote == 'Approve' %}bg-success{% elif review.vote == 'Reject' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                {{ review.vote }}
+                                            </span>
+                                        </div>
+                                        <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d') }}</small>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if review.comments %}
+                                            <p>{{ review.comments }}</p>
+                                        {% else %}
+                                            <p class="text-muted">No comments provided.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> No reviews available yet.
+                                {% if application.status == 'In Review' %}
+                                    {% if current_user.is_arb_member() %}
+                                        <a href="{{ url_for('arb.review_application', app_id=application.id) }}">Add a review</a>
+                                    {% else %}
+                                        Reviews will be added by ARB members.
+                                    {% endif %}
+                                {% else %}
+                                    Submit the application for review to receive ARB feedback.
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        {% if current_user.is_arb_member() and application.is_in_review_stage() %}
+                            <div class="mt-4">
+                                <h5>ARB Insights</h5>
+                                <div id="arb-insights">
+                                    <div class="d-flex justify-content-center">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Status Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Current Status:</span>
+                    <span class="status-badge">{{ application.status }}</span>
+                </div>
+                
+                <div class="progress mb-3" style="height: 30px;">
+                    {% if application.status == 'PTI' %}
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 25%;">PTI</div>
+                        <div class="progress-bar bg-light text-dark" role="progressbar" style="width: 25%;">In Review</div>
+                        <div class="progress-bar bg-light text-dark" role="progressbar" style="width: 50%;">PTO</div>
+                    {% elif application.status == 'In Review' %}
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 25%;">PTI</div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 25%;">In Review</div>
+                        <div class="progress-bar bg-light text-dark" role="progressbar" style="width: 50%;">PTO</div>
+                    {% elif application.status == 'PTO' %}
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 25%;">PTI</div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 25%;">In Review</div>
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 50%;">PTO</div>
+                    {% elif application.status == 'Rejected' %}
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 25%;">PTI</div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 25%;">In Review</div>
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 50%;">Rejected</div>
+                    {% endif %}
+                </div>
+                
+                {% if application.is_in_pti_stage() %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i> This application is in PTI (Permit to Initiate) stage.
+                    </div>
+                    <div class="d-grid gap-2">
+                        <form action="{{ url_for('applications.submit_for_review', app_id=application.id) }}" method="POST">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Submit for Review
+                            </button>
+                        </form>
+                    </div>
+                {% elif application.is_in_review_stage() %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-clipboard-check me-2"></i> This application is being reviewed by ARB.
+                    </div>
+                {% elif application.is_in_pto_stage() %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i> This application has been approved for PTO (Permit to Operate).
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i> This application has been rejected.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('applications.analyze_hldd', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-search me-2"></i>Analyze HLDD</h6>
+                        </div>
+                        <small>Analyze the HLDD for architectural soundness</small>
+                    </a>
+                    <a href="{{ url_for('applications.recommend_architecture', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-lightbulb me-2"></i>Get Recommendations</h6>
+                        </div>
+                        <small>Get architecture recommendations</small>
+                    </a>
+                    <a href="{{ url_for('applications.generate_diagram', app_id=application.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-project-diagram me-2"></i>Generate Diagrams</h6>
+                        </div>
+                        <small>Create architecture diagrams</small>
+                    </a>
+                    <a href="#" id="ask-question-btn" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-question-circle me-2"></i>Ask a Question</h6>
+                        </div>
+                        <small>Get help with architecture questions</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden input for JS -->
+<input type="hidden" id="application-id" value="{{ application.id }}">
+
+<!-- Ask Question Modal -->
+<div class="modal fade" id="askQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Ask Architecture Question</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="question" class="form-label">Your Question</label>
+                    <textarea class="form-control" id="question" rows="3" placeholder="E.g., What are the pros and cons of microservices architecture?"></textarea>
+                </div>
+                <div id="answer-container" class="d-none">
+                    <hr>
+                    <h6><i class="fas fa-lightbulb me-2"></i>Answer</h6>
+                    <div id="answer-content" class="p-3 bg-light rounded">
+                        <!-- Answer will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submit-question">
+                    <i class="fas fa-paper-plane me-2"></i>Ask Question
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/application_detail.js') }}"></script>
+{% endblock %}

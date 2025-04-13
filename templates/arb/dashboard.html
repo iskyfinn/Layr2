@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - ARB Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-users me-2"></i>ARB Dashboard</h2>
+        <p class="text-muted">Manage Architecture Review Board activities</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('arb.applications_list') }}" class="btn btn-primary me-2">
+            <i class="fas fa-list me-1"></i> All Applications
+        </a>
+        <a href="{{ url_for('arb.new_meeting') }}" class="btn btn-outline-primary">
+            <i class="fas fa-calendar-plus me-1"></i> Schedule Meeting
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Applications In Review -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Applications In Review</h5>
+                <a href="{{ url_for('arb.applications_list') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if applications_in_review %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Owner</th>
+                                    <th>Submitted</th>
+                                    <th>Reviews</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in applications_in_review %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('applications.application_detail', app_id=app.id) }}">
+                                            {{ app.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ app.owner.username }}</td>
+                                    <td>{{ app.updated_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ app.reviews.count() }} Reviews
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('applications.application_detail', app_id=app.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" 
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('arb.review_application', app_id=app.id) }}" 
+                                               class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" 
+                                               title="Review">
+                                                <i class="fas fa-clipboard-check"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> There are no applications currently in review.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Upcoming Meetings -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Meetings</h5>
+                <a href="{{ url_for('arb.meetings') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_meetings %}
+                    <div class="list-group">
+                        {% for meeting in upcoming_meetings %}
+                            <a href="{{ url_for('arb.meeting_detail', meeting_id=meeting.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">ARB Meeting on {{ meeting.scheduled_date.strftime('%Y-%m-%d %H:%M') }}</h6>
+                                    <span class="badge bg-primary rounded-pill">
+                                        {{ meeting.applications.count() }} Applications
+                                    </span>
+                                </div>
+                                <p class="mb-1">
+                                    {% if meeting.notes %}
+                                        {{ meeting.notes }}
+                                    {% else %}
+                                        No additional notes for this meeting.
+                                    {% endif %}
+                                </p>
+                                <small>Click to view meeting details and agenda</small>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> There are no upcoming meetings scheduled.
+                        <a href="{{ url_for('arb.new_meeting') }}" class="alert-link">Schedule a meeting</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recent Decisions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-check-double me-2"></i>Recent Decisions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_decisions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Application</th>
+                                    <th>Decision</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in recent_decisions %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('applications.application_detail', app_id=app.id) }}">
+                                            {{ app.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if app.status == 'PTO' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ app.updated_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('applications.application_detail', app_id=app.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No recent decisions have been made.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- ARB Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>ARB Stats</h5>
+            </div>
+            <div class="card-body">
+                <!-- Added data attributes to pass values to JS -->
+                <canvas id="applicationStatusChart" 
+                        data-pti-count="{{ applications_in_review|selectattr('status', 'equalto', 'PTI')|list|length }}"
+                        data-in-review-count="{{ applications_in_review|selectattr('status', 'equalto', 'In Review')|list|length }}" 
+                        data-pto-count="{{ recent_decisions|selectattr('status', 'equalto', 'PTO')|list|length }}"
+                        data-rejected-count="{{ recent_decisions|selectattr('status', 'equalto', 'Rejected')|list|length }}"
+                        class="mb-4"></canvas>
+                
+                <div class="list-group">
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Applications in Review</h6>
+                            <span class="badge bg-primary rounded-pill">{{ applications_in_review|length }}</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Upcoming Meetings</h6>
+                            <span class="badge bg-primary rounded-pill">{{ upcoming_meetings|length }}</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Recent Approvals</h6>
+                            <span class="badge bg-success rounded-pill">
+                                {{ recent_decisions|selectattr('status', 'equalto', 'PTO')|list|length }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Recent Rejections</h6>
+                            <span class="badge bg-danger rounded-pill">
+                                {{ recent_decisions|selectattr('status', 'equalto', 'Rejected')|list|length }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('arb.applications_list') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-list me-2"></i>View All Applications</h6>
+                        </div>
+                        <small>See all applications by status</small>
+                    </a>
+                    <a href="{{ url_for('arb.new_meeting') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-calendar-plus me-2"></i>Schedule Meeting</h6>
+                        </div>
+                        <small>Set up a new ARB meeting</small>
+                    </a>
+                    <a href="{{ url_for('arb.meetings') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-calendar-alt me-2"></i>View All Meetings</h6>
+                        </div>
+                        <small>See scheduled and past meetings</small>
+                    </a>
+                    <a href="{{ url_for('analytics.dashboard') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h6>
+                        </div>
+                        <small>View detailed ARB analytics</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/arb_dashboard.js') }}"></script>
+{% endblock %}

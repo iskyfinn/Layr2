@@ -33,6 +33,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function formatStatusBadges() {
+    const statusElements = document.querySelectorAll('.status-badge');
+    statusElements.forEach(function(element) {
+        const status = element.innerText.trim();
+        element.classList.add('status-' + status.toLowerCase().replace(' ', '-'));
+        
+        if (status === 'PTI') {
+            element.classList.add('status-pti');
+        } else if (status === 'In Review') {
+            element.classList.add('status-review');
+        } else if (status === 'PTO') {
+            element.classList.add('status-pto');
+        } else if (status === 'Rejected') {
+            element.classList.add('status-rejected');
+        }
+    });
+}
+
     // Format application status badges
     formatStatusBadges();
     
@@ -1743,6 +1761,242 @@ function loadArbInsights() {
     }
 }
 
+// React component for HLDD Generation Wizard
+import React, { useState } from 'react';
+
+const HLDDGenerationWizard = ({ applicationId }) => {
+    // State to track the current step and collected information
+    const [currentStep, setCurrentStep] = useState(0);
+    const [hlddData, setHLDDData] = useState({
+        // Basic Information
+        basicInfo: {
+            name: '',
+            purpose: '',
+            scope: '',
+            overview: ''
+        },
+        
+        // System Details
+        systemDetails: {
+            functions: [],
+            userRoles: [],
+            useCases: []
+        },
+        
+        // Architecture Information
+        architectureInfo: {
+            principles: [],
+            components: [],
+            keyConstraints: []
+        },
+        
+        // Technology Stack
+        technologyStack: {
+            categories: []
+        },
+        
+        // Security Considerations
+        securityInfo: {
+            authentication: '',
+            dataProtection: '',
+            networkSecurity: ''
+        },
+        
+        // Deployment Details
+        deploymentInfo: {
+            environments: [],
+            deploymentApproach: ''
+        }
+    });
+
+    // Questions for each step of the wizard
+    const wizardSteps = [
+        {
+            title: 'Basic Application Information',
+            questions: [
+                {
+                    key: 'name',
+                    prompt: 'What is the name of your application?',
+                    type: 'text',
+                    placeholder: 'Enter application name'
+                },
+                {
+                    key: 'purpose',
+                    prompt: 'What is the primary purpose of this application?',
+                    type: 'textarea',
+                    placeholder: 'Describe the main goal of the application'
+                }
+            ]
+        }
+    ];
+
+    // Handler for updating data
+    const handleDataUpdate = (key, value) => {
+        setHLDDData(prev => {
+            const stepKey = currentStep === 0 ? 'basicInfo' : 'systemDetails';
+            
+            return {
+                ...prev,
+                [stepKey]: {
+                    ...prev[stepKey],
+                    [key]: value
+                }
+            };
+        });
+    };
+
+    // Submit handler
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch(`/applications/${applicationId}/generate_hldd`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(hlddData)
+            });
+
+            if (response.ok) {
+                // Handle successful HLDD generation
+                const result = await response.json();
+                console.log('HLDD Generated:', result);
+            } else {
+                // Handle error
+                console.error('HLDD generation failed');
+            }
+        } catch (error) {
+            console.error('Error submitting HLDD data:', error);
+        }
+    };
+
+    // Render current step's questions
+    const renderQuestions = () => {
+        const currentStepData = wizardSteps[currentStep];
+        
+        return (
+            <div className="card">
+                <div className="card-header">
+                    <h5 className="mb-0">
+                        <i className="fas fa-question-circle me-2"></i>
+                        {currentStepData.title}
+                    </h5>
+                </div>
+                <div className="card-body">
+                    {currentStepData.questions.map((question, index) => (
+                        <div key={index} className="mb-4">
+                            <label className="form-label">{question.prompt}</label>
+                            {question.type === 'text' && (
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    placeholder={question.placeholder}
+                                    value={hlddData.basicInfo[question.key] || ''}
+                                    onChange={(e) => handleDataUpdate(question.key, e.target.value)}
+                                />
+                            )}
+                            {question.type === 'textarea' && (
+                                <textarea 
+                                    className="form-control" 
+                                    placeholder={question.placeholder}
+                                    value={hlddData.basicInfo[question.key] || ''}
+                                    onChange={(e) => handleDataUpdate(question.key, e.target.value)}
+                                />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    // Navigation handlers
+    const goToNextStep = () => {
+        if (currentStep < wizardSteps.length - 1) {
+            setCurrentStep(prev => prev + 1);
+        } else {
+            // Last step - submit
+            handleSubmit();
+        }
+    };
+
+    const goToPreviousStep = () => {
+        if (currentStep > 0) {
+            setCurrentStep(prev => prev - 1);
+        }
+    };
+
+    return (
+        <div className="container-fluid">
+            <div className="row">
+                <div className="col-md-8 offset-md-2">
+                    {/* Progress Indicator */}
+                    <div className="progress mb-4">
+                        <div 
+                            className="progress-bar" 
+                            role="progressbar" 
+                            style={{width: `${(currentStep + 1) / wizardSteps.length * 100}%`}}
+                        ></div>
+                    </div>
+
+                    {/* Current Step Questions */}
+                    {renderQuestions()}
+
+                    {/* Navigation Buttons */}
+                    <div className="d-flex justify-content-between mt-4">
+                        {currentStep > 0 && (
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={goToPreviousStep}
+                            >
+                                <i className="fas fa-arrow-left me-2"></i>Previous
+                            </button>
+                        )}
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={goToNextStep}
+                        >
+                            {currentStep < wizardSteps.length - 1 
+                                ? 'Next' 
+                                : 'Generate HLDD'}
+                            <i className="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default HLDDGenerationWizard;
+
+// Placeholder for global JavaScript functionality
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Layr application initialized');
+    
+    // Add any global event listeners or initializations here
+});
+
+/**
+ * JavaScript for handling HLDD analysis functionality
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle automatic analysis after upload
+    const hlddUploadForm = document.getElementById('hldd-upload-form');
+    if (hlddUploadForm) {
+        hlddUploadForm.addEventListener('submit', function(e) {
+            // Show loading indicator
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading & Analyzing...';
+            
+            // Form will be submitted normally, no need to prevent default
+        });
+    }
+    
+    // Handle HLDD analysis button
+    const analyzeHlddBtn = document.getElementById('analyze-hldd-btn');
+
 /**
  * Generate a chart for application statuses
  * @param {string} canvasId - The ID of the canvas element
@@ -1765,6 +2019,8 @@ function generateStatusChart(canvasId, data) {
                 ],
                 borderWidth: 0
             }]
+
+
         },
         options: {
             responsive: true,

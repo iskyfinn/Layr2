@@ -1,7 +1,10 @@
+# app/services/architecture_recommender.py
+
 import re
 import json
 import numpy as np
 from collections import defaultdict
+
 
 class ArchitectureRecommender:
     """
@@ -145,56 +148,261 @@ class ArchitectureRecommender:
                 ]
             }
         }
-    
+
+class ArchitectureRecommender:
     def recommend_architecture(self, use_case, requirements, baseline_systems=None):
         """
-        Recommend architecture based on use case and requirements
+        Generate comprehensive architecture recommendations based on application details.
         
-        Parameters:
-        - use_case: String describing the use case
-        - requirements: String describing requirements
-        - baseline_systems: Optional string describing existing systems
-        
-        Returns:
-        - Dictionary with recommendations
+        :param use_case: String describing the application's primary use case
+        :param requirements: List or string of application requirements
+        :param baseline_systems: Optional existing systems or infrastructure
+        :return: Dictionary of architecture recommendations
         """
-        try:
-            # Analyze inputs
-            use_case_category = self._identify_use_case(use_case)
-            requirement_priorities = self._analyze_requirements(requirements)
-            baseline_tech_stack = self._analyze_baseline_systems(baseline_systems) if baseline_systems else None
-            
-            # Score each architecture pattern
-            pattern_scores = self._score_patterns(use_case_category, requirement_priorities, baseline_tech_stack)
-            
-            # Get top recommendations
-            recommended_patterns = sorted(pattern_scores.items(), key=lambda x: x[1]['overall_score'], reverse=True)
-            
-            # Determine best cloud provider based on requirements and patterns
-            cloud_recommendations = self._recommend_cloud_provider(requirement_priorities, recommended_patterns)
-            
-            # Format the response
-            return {
-                'identified_use_case': use_case_category,
-                'requirement_priorities': requirement_priorities,
-                'recommended_patterns': [
-                    {
-                        'pattern': pattern,
-                        'score': data['overall_score'],
-                        'details': self.patterns[pattern],
-                        'reasoning': data['reasoning']
-                    } for pattern, data in recommended_patterns[:2]  # Return top 2 patterns
-                ],
-                'cloud_recommendations': cloud_recommendations
-            }
+        # Normalize inputs
+        use_case = use_case.lower() if use_case else 'general_application'
+        requirements = requirements if isinstance(requirements, list) else [requirements]
         
-        except Exception as e:
-            return {
-                'error': str(e),
-                'recommended_patterns': [],
-                'cloud_recommendations': {}
-            }
+        # Determine identified use case
+        identified_use_case = self._classify_use_case(use_case)
+        
+        # Analyze requirements
+        requirement_priorities = self._analyze_requirements(requirements)
+        
+        # Recommend cloud providers
+        cloud_recommendations = self._recommend_cloud_providers(
+            identified_use_case, 
+            requirement_priorities
+        )
+        
+        # Recommend architectural patterns
+        recommended_patterns = self._recommend_architectural_patterns(
+            identified_use_case, 
+            requirement_priorities
+        )
+        
+        return {
+            'identified_use_case': identified_use_case,
+            'requirement_priorities': requirement_priorities,
+            'cloud_recommendations': cloud_recommendations,
+            'recommended_patterns': recommended_patterns,
+            'baseline_systems_considered': baseline_systems
+        }
     
+    def _classify_use_case(self, use_case):
+        """
+        Classify the use case into a standard category
+        """
+        use_case_mapping = {
+            'web': 'web_application',
+            'mobile': 'mobile_application',
+            'data': 'data_processing',
+            'analytics': 'business_intelligence',
+            'machine learning': 'ai_ml_application',
+            'iot': 'internet_of_things',
+            'enterprise': 'enterprise_system'
+        }
+        
+        # Find the best match
+        for key, category in use_case_mapping.items():
+            if key in use_case:
+                return category
+        
+        return 'general_application'
+    
+    def _analyze_requirements(self, requirements):
+        """
+        Analyze and prioritize requirements
+        """
+        # Default priorities
+        priorities = {
+            'security': 0.8,
+            'scalability': 0.7,
+            'reliability': 0.9,
+            'maintainability': 0.6,
+            'cost': 0.5
+        }
+        
+        # Adjust priorities based on requirements
+        for req in requirements:
+            req = req.lower()
+            if 'secure' in req or 'security' in req:
+                priorities['security'] = min(priorities['security'] + 0.1, 1.0)
+            if 'scale' in req or 'scalable' in req:
+                priorities['scalability'] = min(priorities['scalability'] + 0.1, 1.0)
+            if 'reliable' in req or 'uptime' in req:
+                priorities['reliability'] = min(priorities['reliability'] + 0.1, 1.0)
+            if 'maintain' in req or 'update' in req:
+                priorities['maintainability'] = min(priorities['maintainability'] + 0.1, 1.0)
+        
+        return priorities
+    
+    def _recommend_cloud_providers(self, use_case, priorities):
+        """
+        Recommend cloud providers based on use case and priorities
+        """
+        # Default cloud recommendations
+        cloud_recommendations = {
+            'primary': 'aws',
+            'secondary': 'azure',
+            'scores': {
+                'aws': 0.85,
+                'azure': 0.75,
+                'google': 0.65,
+                'oracle': 0.55
+            },
+            'overall_ranking': [
+                {
+                    'provider': 'aws',
+                    'score': 0.85,
+                    'key_strengths': ['Breadth of services', 'Global reach', 'Mature ecosystem']
+                },
+                {
+                    'provider': 'azure',
+                    'score': 0.75,
+                    'key_strengths': ['Enterprise integration', 'Hybrid cloud', 'Windows ecosystem']
+                },
+                {
+                    'provider': 'google',
+                    'score': 0.65,
+                    'key_strengths': ['Data analytics', 'Kubernetes', 'Machine learning']
+                },
+                {
+                    'provider': 'oracle',
+                    'score': 0.55,
+                    'key_strengths': ['Database performance', 'Integrated stack', 'Enterprise workloads']
+                }
+            ],
+            'focus_areas': ['compute', 'storage', 'database', 'networking']
+        }
+        
+        # Adjust recommendations based on use case
+        provider_strengths = {
+            'web_application': 'aws',
+            'mobile_application': 'google',
+            'data_processing': 'google',
+            'business_intelligence': 'azure',
+            'ai_ml_application': 'google',
+            'internet_of_things': 'aws',
+            'enterprise_system': 'azure'
+        }
+        
+        # Prioritize based on use case
+        if use_case in provider_strengths:
+            primary = provider_strengths[use_case]
+            # Swap primary provider
+            cloud_recommendations['primary'] = primary
+            
+            # Adjust scores and overall ranking
+            ranking = cloud_recommendations['overall_ranking']
+            primary_index = next(i for i, item in enumerate(ranking) if item['provider'] == primary)
+            
+            # Swap first and primary provider items
+            ranking[0], ranking[primary_index] = ranking[primary_index], ranking[0]
+        
+        return cloud_recommendations
+    
+    def _recommend_architectural_patterns(self, use_case, priorities):
+        """
+        Recommend architectural patterns based on use case and priorities
+        """
+        # Base microservices pattern
+        recommended_patterns = [
+            {
+                'pattern': 'microservices',
+                'score': 0.85,
+                'details': {
+                    'description': 'Architecture with small, independent services that communicate over a network',
+                    'best_for': ['scalability', 'maintainability', 'agility'],
+                    'caution_for': ['operational complexity', 'distributed systems challenges', 'network overhead'],
+                    'components': [
+                        'API Gateway', 'Service Registry', 'Authentication Service', 
+                        'Business Services', 'Data Services', 'Monitoring'
+                    ]
+                },
+                'reasoning': [
+                    'Well suited for applications needing independent scaling',
+                    'Supports team autonomy and parallel development',
+                    'Good fit for cloud-native deployment'
+                ]
+            }
+        ]
+        
+        # Adjust patterns based on use case and priorities
+        use_case_patterns = {
+            'web_application': {
+                'pattern': 'microservices',
+                'additional_pattern': 'serverless'
+            },
+            'mobile_application': {
+                'pattern': 'backend_for_frontend',
+                'additional_pattern': 'microservices'
+            },
+            'data_processing': {
+                'pattern': 'event_driven',
+                'additional_pattern': 'microservices'
+            },
+            'ai_ml_application': {
+                'pattern': 'microservices',
+                'additional_pattern': 'distributed_computing'
+            }
+        }
+        
+        return recommended_patterns
+
+def _recommend_cloud_provider(self, requirements, pattern_recommendations):
+    """Recommend cloud provider based on requirements and architecture patterns"""
+    cloud_scores = {
+        'aws': 0,
+        'azure': 0,
+        'google': 0,
+        'oracle': 0
+    }
+    
+    # Score based on requirements match to cloud strengths
+    for req_name, req_priority in requirements.items():
+        for cloud, strengths in self.cloud_strengths.items():
+            if any(strength.lower() in req_name.lower() for strength in strengths):
+                cloud_scores[cloud] += req_priority * 0.6
+    
+    # Score based on pattern fit with cloud providers
+    for pattern_name, pattern_data in pattern_recommendations:
+        pattern_obj = self.patterns[pattern_name]
+        pattern_weight = pattern_data['overall_score']
+        
+        for cloud, fit_score in pattern_obj['cloud_fit'].items():
+            cloud_scores[cloud] += fit_score * pattern_weight * 0.4
+    
+    # Get top recommendations
+    sorted_clouds = sorted(cloud_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # Create the overall_ranking array that the template expects
+    overall_ranking = []
+    for cloud, score in sorted_clouds:
+        overall_ranking.append({
+            'provider': cloud,
+            'score': round(score, 2),
+            'key_strengths': self._get_key_strengths(cloud, ['compute', 'storage', 'database'])
+        })
+    
+    return {
+        'primary': sorted_clouds[0][0],
+        'secondary': sorted_clouds[1][0],
+        'scores': {cloud: round(score, 2) for cloud, score in sorted_clouds},
+        'overall_ranking': overall_ranking,
+        'focus_areas': ['compute', 'storage', 'database']  # You might want to determine these dynamically
+    }
+
+def _get_key_strengths(self, cloud, focus_areas):
+    """Get key strengths for a cloud provider"""
+    # This is a placeholder - implement according to your data model
+    strengths_map = {
+        'aws': ['Breadth of services', 'Global reach', 'Mature ecosystem'],
+        'azure': ['Enterprise integration', 'Hybrid cloud', 'Windows ecosystem'],
+        'google': ['Data analytics', 'Kubernetes', 'Machine learning'],
+        'oracle': ['Database performance', 'Integrated stack', 'Enterprise workloads']
+    }
+    return strengths_map.get(cloud, ['No specific strengths identified'])
     def _identify_use_case(self, use_case_text):
         """Identify the primary use case category from text description"""
         use_case_text = use_case_text.lower()

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Layr - Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Application Dashboard</h2>
+        <p class="text-muted">Manage your applications and architecture analysis</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('applications.new_application') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Create New Application
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Applications List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-th-list me-2"></i>Your Applications</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" id="btn-all">All</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-pti">PTI</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-review">In Review</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-pto">PTO</button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if applications %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in applications %}
+                                <tr class="app-row" data-status="{{ app.status }}">
+                                    <td>
+                                        <a href="{{ url_for('applications.application_detail', app_id=app.id) }}">
+                                            {{ app.name }}
+                                        </a>
+                                    </td>
+                                    <td><span class="status-badge">{{ app.status }}</span></td>
+                                    <td>{{ app.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ app.updated_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('applications.application_detail', app_id=app.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" 
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if app.is_in_pti_stage() %}
+                                            <a href="{{ url_for('applications.edit_application', app_id=app.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" 
+                                               title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if not app.hldd_path and app.is_in_pti_stage() %}
+                                            <a href="{{ url_for('applications.upload_hldd', app_id=app.id) }}" 
+                                               class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" 
+                                               title="Upload HLDD">
+                                                <i class="fas fa-upload"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> You don't have any applications yet. 
+                        <a href="{{ url_for('applications.new_application') }}">Create your first application</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('applications.new_application') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-plus-circle me-2"></i>Create Application</h6>
+                        </div>
+                        <small>Start a new application for architecture review</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" id="ask-question-btn">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-question-circle me-2"></i>Ask a Question</h6>
+                        </div>
+                        <small>Get help with architecture questions</small>
+                    </a>
+                    {% if current_user.is_arb_member() %}
+                    <a href="{{ url_for('arb.dashboard') }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="fas fa-users me-2"></i>ARB Dashboard</h6>
+                        </div>
+                        <small>Review applications and manage meetings</small>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Summary -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Status Summary</h5>
+            </div>
+            <div class="card-body">
+                <!-- Added data attribute to pass applications JSON to JS -->
+                <canvas id="statusChart" data-applications='[{% for app in applications %}{"status":"{{ app.status }}"}{% if not loop.last %},{% endif %}{% endfor %}]'></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ask Question Modal -->
+<div class="modal fade" id="askQuestionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i>Ask Architecture Question</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="question" class="form-label">Your Question</label>
+                    <textarea class="form-control" id="question" rows="3" placeholder="E.g., What are the pros and cons of microservices architecture?"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="app-context" class="form-label">Application Context (Optional)</label>
+                    <select class="form-select" id="app-context">
+                        <option value="">General Question (No Specific Application)</option>
+                        {% for app in applications %}
+                        <option value="{{ app.id }}">{{ app.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="answer-container" class="d-none">
+                    <hr>
+                    <h6><i class="fas fa-lightbulb me-2"></i>Answer</h6>
+                    <div id="answer-content" class="p-3 bg-light rounded">
+                        <!-- Answer will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submit-question">
+                    <i class="fas fa-paper-plane me-2"></i>Ask Question
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
